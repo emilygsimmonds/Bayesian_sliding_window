@@ -1,2 +1,2 @@
 # Bayesian_sliding_window
-Repository to try out making a Bayesian form for a sliding window
+Code to develop a Bayesian sliding window in Nimble
