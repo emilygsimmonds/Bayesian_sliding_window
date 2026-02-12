@@ -4,6 +4,7 @@
 #' window search in Nimble with window 'open' and window 'duration' as 
 #' parameters
 #'
+#'DEBUGGED USING ELM: 03 model
 
 #### Set up ####
 
@@ -21,12 +22,12 @@ x <- as.list(1:100) # just an index of years
 set.seed(1)
 y <- as.list(rnorm(100, 40, 25)) # index of year effect
 temperature_variable <- map2(x, y, ~ {
-  keyWindow <- rnorm(11, mean = .y,
-                     sd = 1)
-  preWindow <- rnorm(19, mean = .y*4,
-                     sd = 5)
-  postWindow <- rnorm(70, mean = .y*5, 
-                     sd = 5)
+  keyWindow <- rnorm(2, mean = .y,
+                     sd = 0.5)
+  preWindow <- rnorm(19, mean = 10,
+                     sd = 0.1)
+  postWindow <- rnorm(79, mean = 10, 
+                     sd = 0.1)
   yearly_temperature <- data.frame(year = c(preWindow,
                                             keyWindow,
                                             postWindow))
@@ -41,7 +42,7 @@ create_bio_variable <- function(temperature, intercept, slope,
   set.seed(1)
   yearly_biological_variable <- rnorm(1, 
                                       mean = (intercept + 
-                                             (mean(temperature[20:30])*slope)),
+                                             (mean(temperature[20:21])*slope)),
                                       sd = standard_deviation)
   return(yearly_biological_variable)
   
@@ -51,7 +52,7 @@ set.seed(1)
 biological_variable <- map(as.list(temperature_variable), ~{
   yearly_biological_variable <- create_bio_variable(temperature = .x[,1],
                                                     intercept = 30,
-                                                    slope = 10,
+                                                    slope = 5,
                                                     standard_deviation = 2)
 }) %>%
   unlist()
@@ -73,7 +74,7 @@ ggplot(data = filter(plottingTemperature,
   geom_line() +
   facet_wrap(~years)
 
-tempMeans <- as.data.frame(colMeans(temperature_variable[20:30,])) %>%
+tempMeans <- as.data.frame(colMeans(temperature_variable[14:15,])) %>%
   pivot_longer(cols = everything(),
                names_to = "years",
                values_to = "temperature") %>%
@@ -84,24 +85,57 @@ ggplot(aes(y = biological_variable,
   geom_point()
 
 #tempMeans <- colMeans(temperature_variable)
-tempMeans <- colMeans(temperature_variable[20:45,])
+tempMeans <- colMeans(temperature_variable[14:15,])
 
 summary(lm(biological_variable ~ tempMeans))
 
 ### try to write a Nimble model
 
 # first need a nimble function for calculation of mean temperature in window
-window_calculator <- nimbleFunction(
-    run = function(open = double(0), 
-                   duration = double(0),
-                   temperature = double(1)) { # type declarations 1 = vector
-    # take the mean of the full days but then weight proportion of other days
-    windowMean <- mean(temperature[ceiling(open):trunc(open+duration)]+
-                         (temperature[floor(open)]*(1-(open-trunc(open))))+
-                         (temperature[ceiling(open+duration)]*(open-trunc(open))))
+window_calculator_integer <- nimbleFunction(
+  run = function(open = double(0), 
+                 duration = double(0),
+                 temperature = double(1)) { # type declarations 1 = vector
+    # just take the mean of the integer values of open and duration
+    windowMean <- mean(temperature[round(open):round(open)+round(duration)]) # works
     return(windowMean)
     returnType(double(0))  # return type declaration
   } )
+
+# first need a nimble function for calculation of mean temperature in window
+window_calculator_weighted <- nimbleFunction(
+    run = function(open = double(0), 
+                   duration = double(0),
+                   temperature = double(1)) { # type declarations 1 = vector
+
+      # set w outside of function
+      w <- rep(1, length(trunc(open):ceiling(open+duration)))
+      # overwrite first and last entry to lower than 1
+      w[1] <- 1-(open-trunc(open))
+      #if(ceiling(open+duration) != # ONLY overwrite 1s if duration not integer
+      #   trunc(open+duration)){}
+      w[length(w)] <- (open+duration) - trunc(open+duration)
+      windowMean <- weighted_mean_nimble(x = c(temperature[trunc(open):ceiling(open+duration)]),
+                                 w = w) # works
+    return(windowMean)
+    returnType(double(0))  # return type declaration
+  } )
+
+weighted_mean_nimble <- nimbleFunction(
+  run = function(x = double(1),
+                 w = double(1)) {
+    
+    # take the variable values and make the numerator
+    numerator <- sum(x*w)
+    
+    # then the denominator
+    denominator <- sum(w)
+    
+    weightedMean <- numerator/denominator
+    return(weightedMean)
+    returnType(double(0))
+  }
+)
 
 test_sliding_window <- nimbleCode({
   
@@ -109,17 +143,17 @@ test_sliding_window <- nimbleCode({
 ## DEFINE PRIORS
 
 open ~ dunif(1, 50) # start with half of time series to avoid impossible combos
-duration ~ dunif(1, 50) # start with shorter windows, again to avoid impossible
+duration ~ dunif(1, 49) # start with shorter windows, again to avoid impossible
 intercept ~ dnorm(50, sd = 100)
-slope ~ dnorm(0, sd = 50)
+slope ~ dnorm(0, sd = 10)
 error ~ dgamma(2, 1)
 
 #-------------------------------------------------------------------------------
 ## CALCULATE WINDOW
 
-for(i in 1:length(years)){
+for(i in 1:years){
 
-temperature_window[i] <- window_calculator(open,
+temperature_window[i] <- window_calculator_integer(open,
                                            duration,
                                            temperature[,i])
 
@@ -136,8 +170,8 @@ biological_variable[i] ~ dnorm((intercept + (temperature_window[i]*slope)),
 
 ### try running the model
 
-n_iter <- 65000000
-n_burnin <- 55000000
+n_iter <- 50000000
+n_burnin <- 40000000
 n_chains <- 2
 
 # set up initial values 
@@ -147,13 +181,13 @@ data_input <- list(temperature = temperature_variable,
 
 constants <- list(years = 30)
 
-set.seed(10)
+set.seed(12)
 inits <- list(open = round(runif(1, 1, 50)),
-                 duration = round(runif(1, 1, 50)),
+                 duration = round(runif(1, 1, 49)),
                  intercept = rnorm(1, 50, sd = 100),
-                 slope = rnorm(1, 0, sd = 50),
-                 error = rgamma(1, 2, 1),
-                 temperature_window = rep(1, 30))
+                 slope = rnorm(1, 0, sd = 10),
+                 error = rgamma(1, 2, 1))
+                 #temperature_window = rep(1, 30))
 
 model_result <- nimbleMCMC(code = test_sliding_window, 
                            data = data_input,
@@ -166,8 +200,7 @@ model_result <- nimbleMCMC(code = test_sliding_window,
                                         "error"),
                            niter = n_iter,
                            nburnin = n_burnin,
-                           nchains = n_chains,
-                           thin = 10)
+                           nchains = n_chains)
 
 MCMCsummary(model_result)
 MCMCtrace(model_result, pdf = FALSE)
@@ -180,7 +213,7 @@ truth <- data.frame(parameter = c("open",
                                   "slope",
                                   "error", 
                                   "intercept"),
-                    truth = c(20, 11, 10, 2, 30))
+                    truth = c(20, 1, 5, 2, 30))
 
 # create a dataframe of the posterior mead
 
