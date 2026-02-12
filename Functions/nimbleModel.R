@@ -1,53 +1,41 @@
-#### Function to run Nimble model #### 
+#### Function to set up Nimble model #### 
 
 #' This script holds the function code for the Nimble model.
 #' 
 #' Inputs are:
-#' windowOpen = earliest day to search from
-#' shortestWindow = shortest length to search
-#' refDay = day you want to reference from should be the index that day falls on
-#' intercept
-#' slope
-#' data_input (input data list)
-#' constants, inits, n_iter, n_chains, n_burnin
+#' windowStarts = index of min and max start day of year to consider (vector)
+#' windowDurations = min and max durations to search (vector)
 
-nimbleModel <- function(data_input,
-                        parametersToMonitor,
-                        constants,
-                        inits, n_iter, n_chains, n_burnin,
-                        n_thin){
+nimbleModel <- function(windowStarts,
+                        windowDurations){
   
 source("./Functions/nimbleSlidingWindow.R")
 
-test_sliding_window <- nimbleCode({
+slidingWindowModel <- nimbleCode({
   
 #-------------------------------------------------------------------------------
 ## DEFINE PRIORS
 
-open ~ dunif(windowOpen, refDay-1) 
-#duration ~ dunif(shortestWindow, (refDay-windowOpen)-open+1)
-duration ~ dunif(shortestWindow, 20)
-intercept ~ dnorm(meanintercept, sd = 50)
-slope ~ dnorm(meanslope, sd = 10)
-#error ~ dgamma(2, 0.5)
-error ~ dunif(0, 5)
+open ~ dunif(windowStarts[1], windowStarts[2]-1) 
+duration ~ dunif(windowDurations[1], windowDurations[2])
+intercept ~ dnorm(0, sd = 50)
+slope ~ dnorm(0, sd = 10)
+error ~ dgamma(2, 0.5)
 
 #-------------------------------------------------------------------------------
 ## CALCULATE WINDOW
 
 for(i in 1:length(years)){
   
-#  temperature_window[i] <- nimbleSlidingWindow(open,
-#                                             duration,
-#                                             temperature[,i])
-#temperature_window[i] <- mean(temperature[1:50,i])
-  temperature_window[i] <- 5
+  temperatureWindow[i] <- nimbleSlidingWindow(open,
+                                              duration,
+                                              temperature[,i])
 
 #-------------------------------------------------------------------------------
 ## LIKELIHOOD FOR BIOLOGICAL VARIABLE
 
-biological_variable[i] ~ dnorm((intercept 
-                                + (temperature_window[i]*slope)), 
+  biological_variable[i] ~ dnorm((intercept 
+                                + (temperatureWindow[i]*slope)), 
                                  sd = error)
   
 }
@@ -55,22 +43,10 @@ biological_variable[i] ~ dnorm((intercept
 #-------------------------------------------------------------------------------
 ## Calculate meaningful parameters for window
 
-resultWindowClose <- refDay - open 
-#resultWindowOpen <- 50 - (open + duration)
-resultWindowOpen <- refDay - (open + duration)
+# have a think about this
+#resultWindowClose <- windowStarts[2] - open 
+#resultWindowOpen <- windowStarts[2] - (open + duration)
 
 })
-
-output <- nimbleMCMC(code = test_sliding_window, 
-           data = data_input,
-           constants = constants,
-           inits = inits,
-           monitors = parametersToMonitor,
-           niter = n_iter,
-           nburnin = n_burnin,
-           nchains = n_chains,
-           thin = n_thin)
-
-return(output)
 
 }
