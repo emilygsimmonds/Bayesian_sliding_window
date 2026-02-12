@@ -1,11 +1,10 @@
-#### Function to run Nimble sliding window #### 
+#### Nimble function to run Nimble sliding window ############################## 
 
 #' This script holds the function code for the sliding window Nimble function.
-#'
 
-#### Set up ####
+#### Set up ####################################################################
 
-### Load packages
+### Load packages ####
 
 library(nimble)
 

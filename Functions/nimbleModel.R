@@ -1,15 +1,14 @@
-#### Function to set up Nimble model #### 
+#### Code for Nimble model #####################################################
 
-#' This script holds the function code for the Nimble model.
-#' 
-#' Inputs are:
-#' windowStarts = index of min and max start day of year to consider (vector)
-#' windowDurations = min and max durations to search (vector)
+#' This script holds the code for the Nimble model.
 
-nimbleModel <- function(windowStarts,
-                        windowDurations){
-  
-source("./Functions/nimbleSlidingWindow.R")
+#### Set up ####################################################################
+
+#### load packages ####
+
+library(nimble)
+
+#### model code ####
 
 slidingWindowModel <- nimbleCode({
   
@@ -49,4 +48,3 @@ for(i in 1:length(years)){
 
 })
 
-}
