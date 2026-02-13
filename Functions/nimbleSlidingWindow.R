@@ -38,8 +38,7 @@ nimbleWeightedSlidingWindow <- nimbleFunction(
                  duration = double(0),
                  temperature = double(1)) { # type declarations 1 = vector
     # set weight outside of function - first all to 1
-    # subtract 1 as otherwise R creates a vector 1 longer than duration
-    weight <- rep(1, length(trunc(open):ceiling(open+duration-1))) 
+    weight <- rep(1, length(trunc(open):ceiling(open+duration))) 
     # overwrite first and last entry to lower than 1
     weight[1] <- 1-(open-trunc(open))
     # need an if clause to deal with integers - only overwrite final weight if
