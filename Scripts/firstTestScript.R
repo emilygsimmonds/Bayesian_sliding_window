@@ -191,7 +191,7 @@ inits <- list(open = round(runif(1, 1, 50)),
                  error = rgamma(1, 2, 1))
                  #temperature_window = rep(1, 30))
 
-model_result <- nimbleMCMC(code = test_sliding_window, 
+model_result1 <- nimbleMCMC(code = test_sliding_window, 
                            data = data_input,
                            constants = constants,
                            inits = inits,
@@ -200,16 +200,16 @@ model_result <- nimbleMCMC(code = test_sliding_window,
                                         "intercept",
                                         "slope",
                                         "error"),
-                           niter = n_iter,
-                           nburnin = n_burnin,
+                           niter = 50000,
+                           nburnin = 5000,
                            nchains = n_chains)
 
-model_result <- nimbleModel(dataInput = data_input,
+model_result2 <- nimbleModel(dataInput = data_input,
                             constants,
                             inits, 
-                            niter = n_iter, 
+                            niter = 500000,
+                            nburnin = 50000,
                             nchains = n_chains, 
-                            nburnin = n_burnin,
                             parametersToMonitor = c("open",
                                                     "duration", 
                                                     "intercept",
@@ -217,7 +217,8 @@ model_result <- nimbleModel(dataInput = data_input,
                                                     "error"),
                             nthin = 50)
 
-MCMCsummary(model_result)
+MCMCsummary(model_result1)
+MCMCsummary(model_result2)
 MCMCtrace(model_result, pdf = FALSE)
 
 # Trying to plot the results including true values 
