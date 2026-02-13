@@ -34,7 +34,6 @@ nimbleModel <- function(windowStarts,
                         parametersToMonitor,
                         nthin){
 
-# source the nimble code needed to run the sliding window and the model
   
   source("./Functions/nimbleModel.R")
   source("./Functions/nimbleSlidingWindow.R")

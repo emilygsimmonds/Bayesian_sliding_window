@@ -4,7 +4,7 @@
 #' window search in Nimble with window 'open' and window 'duration' as 
 #' parameters
 #'
-#'DEBUGGED USING ELM: 03 model
+
 
 #### Set up ####
 

@@ -25,7 +25,7 @@ nimbleSlidingWindow <- nimbleFunction(
                  duration = double(0),
                  temperature = double(1)) { # type declarations 1 = vector
     
-    return(mean(temperature[round(open):ceiling(open+duration)]))
+    return(mean(temperature[trunc(open):ceiling(open+duration)]))
     
     returnType(double(0))  # return type declaration
   } )
