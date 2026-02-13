@@ -3,8 +3,6 @@
 #' This script holds the function code to run the slidingWindowModel.
 #' 
 #' Inputs are:
-#' windowStarts = index of min and max start day of year to consider (vector)
-#' windowDurations = min and max durations to search (vector)
 #' dataInput (input data list) including biological data and temperature
 #' constants = any constants that go into the model e.g. number of years
 #' inits = initial values for all sampled parameters
@@ -23,9 +21,7 @@ library(nimble)
 
 #### function code ####
 
-nimbleModel <- function(windowStarts,
-                        windowDurations,
-                        dataInput,
+nimbleModel <- function(dataInput,
                         constants,
                         inits, 
                         niter, 

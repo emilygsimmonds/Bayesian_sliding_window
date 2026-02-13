@@ -19,7 +19,7 @@ open ~ dunif(windowStarts[1], windowStarts[2]-1)
 duration ~ dunif(windowDurations[1], windowDurations[2])
 intercept ~ dnorm(0, sd = 50)
 slope ~ dnorm(0, sd = 10)
-error ~ dgamma(2, 0.5)
+error ~ dgamma(2, 1)
 
 #-------------------------------------------------------------------------------
 ## CALCULATE WINDOW

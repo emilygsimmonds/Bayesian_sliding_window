@@ -171,7 +171,7 @@ biological_variable[i] ~ dnorm((intercept + (temperature_window[i]*slope)),
 ### try running the model
 
 n_iter <- 50000000
-n_burnin <- 40000000
+n_burnin <- 4000000
 n_chains <- 2
 
 # set up initial values 
@@ -179,7 +179,9 @@ n_chains <- 2
 data_input <- list(temperature = temperature_variable,
                    biological_variable = biological_variable)
 
-constants <- list(years = 30)
+constants <- list(years = 30,
+                  windowStarts = c(1,50),
+                  windowDurations = c(1,49))
 
 set.seed(12)
 inits <- list(open = round(runif(1, 1, 50)),
@@ -201,6 +203,19 @@ model_result <- nimbleMCMC(code = test_sliding_window,
                            niter = n_iter,
                            nburnin = n_burnin,
                            nchains = n_chains)
+
+model_result <- nimbleModel(dataInput = data_input,
+                            constants,
+                            inits, 
+                            niter = n_iter, 
+                            nchains = n_chains, 
+                            nburnin = n_burnin,
+                            parametersToMonitor = c("open",
+                                                    "duration", 
+                                                    "intercept",
+                                                    "slope",
+                                                    "error"),
+                            nthin = 50)
 
 MCMCsummary(model_result)
 MCMCtrace(model_result, pdf = FALSE)
