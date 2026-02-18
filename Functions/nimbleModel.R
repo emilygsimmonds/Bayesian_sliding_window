@@ -80,7 +80,7 @@ slidingWindowModel <- nimbleCode({
     #-------------------------------------------------------------------------------
     ## LIKELIHOOD FOR BIOLOGICAL VARIABLE
     
-    biological_variable[i] ~ dnorm((intercept 
+    biologicalVariable[i] ~ dnorm((intercept 
                                     + (temperatureWindow[i]*slope)), 
                                    sd = error)
     
