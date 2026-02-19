@@ -66,39 +66,45 @@ for(j in 1:numYears){
 })}else{
 slidingWindowModel <- nimbleCode({
   
-  #-------------------------------------------------------------------------------
-  ## DEFINE PRIORS
+#-------------------------------------------------------------------------------
+## DEFINE PRIORS
+
+open ~ dunif(windowStarts[1], windowStarts[2]-1) 
+duration ~ dunif(windowDurations[1], windowDurations[2])
+intercept ~ dnorm(0, sd = 100)
+slope ~ dnorm(0, sd = 10)
+error ~ dgamma(2, 1)
+
+#-------------------------------------------------------------------------------
+## CALCULATE WINDOW
+
+for(i in 1:numYears){
+ 
+ temperatureWindow[i] <- nimbleWeightedSlidingWindow(open,
+                                             duration,
+                                             temperature[,i])
+} # keep the loop just for temperature
+
+# make the temperature mean centred
+
+centredTemperature[1:numYears] <- temperatureWindow[1:numYears] - mean(temperatureWindow[1:numYears])
+
+#-------------------------------------------------------------------------------
+## LIKELIHOOD FOR BIOLOGICAL VARIABLE - own loop
+
+for(j in 1:numYears){
   
-  open ~ dunif(windowStarts[1], windowStarts[2]-1) 
-  duration ~ dunif(windowDurations[1], windowDurations[2])
-  intercept ~ dnorm(0, sd = 100)
-  slope ~ dnorm(0, sd = 10)
-  error ~ dgamma(2, 1)
+  biologicalVariable[j] ~ dnorm((intercept 
+                                 + (centredTemperature[j]*slope)), 
+                                sd = error)
+}
   
-  #-------------------------------------------------------------------------------
-  ## CALCULATE WINDOW
-  
-  for(i in 1:numYears){
-    
-    temperatureWindow[i] <- nimbleWeightedSlidingWindow(open,
-                                                duration,
-                                                temperature[,i])
-    
-    #-------------------------------------------------------------------------------
-    ## LIKELIHOOD FOR BIOLOGICAL VARIABLE
-    
-    biologicalVariable[i] ~ dnorm((intercept 
-                                    + (temperatureWindow[i]*slope)), 
-                                   sd = error)
-    
-  }
-  
-  #-------------------------------------------------------------------------------
-  ## Calculate meaningful parameters for window
-  
-  # have a think about this
-  #resultWindowClose <- windowStarts[2] - open 
-  #resultWindowOpen <- windowStarts[2] - (open + duration)
+#-------------------------------------------------------------------------------
+## Calculate meaningful parameters for window
+
+# have a think about this
+#resultWindowClose <- windowStarts[2] - open 
+#resultWindowOpen <- windowStarts[2] - (open + duration)
   
 })
 }

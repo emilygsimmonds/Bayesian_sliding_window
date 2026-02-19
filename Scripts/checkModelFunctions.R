@@ -166,8 +166,27 @@ MCMCsummary(testModel1) # SLOPE IS OVER ESTIMATED HERE BUT OPEN + DURATION
 
 summary(testModel2) # PRETTY MUCH EXACTLY RIGHT
 
-
 ### Test 2: does the weighted model function give same results as manual? ####
+
+# run defineNimbleModel function with integer selected
+
+slidingWindowModel <- defineNimbleModel(slidingWindowType = "weighted")
+
+# manual running straight from Nimble
+
+testModel3 <- nimbleMCMC(code = slidingWindowModel,
+                         data = dataInput,
+                         constants,
+                         inits, 
+                         niter = niter,
+                         nburnin = nburnin,
+                         nchains = nchains, 
+                         monitors = parametersToMonitor,
+                         thin = nthin) # RUNS AT LEAST 19.02.2026
+
+
+MCMCsummary(testModel3) # THIS ONE IS MUCH BETTER! EVERYTHING BANG ON. 
+MCMCtrace(testModel3, pdf = FALSE)
 
 ### Test 3:  ####
 
