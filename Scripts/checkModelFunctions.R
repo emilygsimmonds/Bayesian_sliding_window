@@ -173,7 +173,7 @@ summary(testModel2) # PRETTY MUCH EXACTLY RIGHT
 slidingWindowModel <- defineNimbleModel(slidingWindowType = "weighted")
 
 # manual running straight from Nimble
-
+set.seed(2026)
 testModel3 <- nimbleMCMC(code = slidingWindowModel,
                          data = dataInput,
                          constants,
@@ -188,15 +188,44 @@ testModel3 <- nimbleMCMC(code = slidingWindowModel,
 MCMCsummary(testModel3) # THIS ONE IS MUCH BETTER! EVERYTHING BANG ON. 
 MCMCtrace(testModel3, pdf = FALSE)
 
-### Test 3:  ####
-
-### Test 4: how do results compare to truth? Weighted ####
-
 #### Testing runNimbleModel ####################################################
 
 ### Test 1: does it give same answer as nimbleModel: integer? ####
 
-# First step 
+# First step - run and use testModel1 above - saves time and code
+
+MCMCsummary(testModel1) # SLOPE IS OVER ESTIMATED HERE BUT OPEN + DURATION 
+# ARE BANG ON
+
+# Then run with the runNimbleModel code
+
+testModel4 <- nimbleModel(slidingWindowType = "integer",
+                          dataInput = dataInput,
+                          constants = constants,
+                          inits = inits, 
+                          niter = niter, 
+                          nchains = nchains, 
+                          nburnin = nburnin,
+                          parametersToMonitor = parametersToMonitor,
+                          nthin = nthin) # RUNS AT LEAST 19.02.2026
+
+MCMCsummary(testModel4) 
 
 ### Test 2: does it give same answer as nimbleModel: weighted? ####
 
+# First step - run and use testModel3 above - saves time and code
+
+# Then run with the runNimbleModel code
+set.seed(2026)
+testModel5 <- nimbleModel(slidingWindowType = "weighted",
+                          dataInput = dataInput,
+                          constants = constants,
+                          inits = inits, 
+                          niter = niter, 
+                          nchains = nchains, 
+                          nburnin = nburnin,
+                          parametersToMonitor = parametersToMonitor,
+                          nthin = nthin) # RUNS AT LEAST 19.02.2026
+
+MCMCsummary(testModel3) 
+MCMCsummary(testModel5) # CHECK PASSED INC with SEED
