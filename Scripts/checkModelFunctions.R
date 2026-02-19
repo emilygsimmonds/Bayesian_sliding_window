@@ -110,20 +110,21 @@ summary(lm(biologicalVariable ~ meanTemperature,
 niter <- 5000000
 nburnin <- 400000
 nchains <- 2
+nthin <- 5
 
 # set up initial values 
 
 dataInput <- list(temperature = temperatureVariableDF,
                    biologicalVariable = biologicalVariable)
 
-constants <- list(years = 30,
+constants <- list(numYears = 100,
                   windowStarts = c(1,50),
                   windowDurations = c(1,49))
 
 set.seed(2026)
 inits <- list(open = round(runif(1, 1, 50)),
               duration = round(runif(1, 1, 49)),
-              intercept = rnorm(1, 50, sd = 100),
+              intercept = rnorm(1, 0, sd = 100),
               slope = rnorm(1, 0, sd = 10),
               error = rgamma(1, 2, 1))
 
@@ -133,13 +134,34 @@ parametersToMonitor = c("open",
              "slope",
              "error")
 
-### Test 1: does the integer model function give same results as manual? ####
+### Test 1: how do results compare to truth and lm? Integer ####
 
+# run defineNimbleModel function with integer selected
+
+slidingWindowModel <- defineNimbleModel(slidingWindowType = "integer")
+
+# manual running straight from Nimble
+
+testModel1 <- nimbleMCMC(code = slidingWindowModel,
+                         data = dataInput,
+                         constants,
+                         inits, 
+                         niter = niter,
+                         nburnin = nburnin,
+                         nchains = nchains, 
+                         monitors = parametersToMonitor,
+                         thin = nthin)
+
+testModel2 <- lm(biologicalVariable ~ meanTemperature, 
+                    data = temperatureMeansDFcombined)
+
+MCMCsummary(testModel1)
+summary(testModel2)
 
 
 ### Test 2: does the weighted model function give same results as manual? ####
 
-### Test 3: how do results compare to truth? Integer ####
+### Test 3:  ####
 
 ### Test 4: how do results compare to truth? Weighted ####
 

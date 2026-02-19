@@ -20,6 +20,7 @@ defineNimbleModel <- function(slidingWindowType = c("integer",
                                               "weighted")){
   
 if(slidingWindowType == "integer"){
+  
 slidingWindowModel <- nimbleCode({
   
 #-------------------------------------------------------------------------------
@@ -27,14 +28,14 @@ slidingWindowModel <- nimbleCode({
 
 open ~ dunif(windowStarts[1], windowStarts[2]-1) 
 duration ~ dunif(windowDurations[1], windowDurations[2])
-intercept ~ dnorm(50, sd = 100)
+intercept ~ dnorm(0, sd = 100)
 slope ~ dnorm(0, sd = 10)
 error ~ dgamma(2, 1)
 
 #-------------------------------------------------------------------------------
 ## CALCULATE WINDOW
 
-for(i in 1:length(years)){
+for(i in 1:numYears){
   
   temperatureWindow[i] <- nimbleSlidingWindow(open,
                                               duration,
@@ -43,7 +44,7 @@ for(i in 1:length(years)){
 #-------------------------------------------------------------------------------
 ## LIKELIHOOD FOR BIOLOGICAL VARIABLE
 
-  biological_variable[i] ~ dnorm((intercept 
+  biologicalVariable[i] ~ dnorm((intercept 
                                 + (temperatureWindow[i]*slope)), 
                                  sd = error)
   
@@ -64,14 +65,14 @@ slidingWindowModel <- nimbleCode({
   
   open ~ dunif(windowStarts[1], windowStarts[2]-1) 
   duration ~ dunif(windowDurations[1], windowDurations[2])
-  intercept ~ dnorm(50, sd = 100)
+  intercept ~ dnorm(0, sd = 100)
   slope ~ dnorm(0, sd = 10)
   error ~ dgamma(2, 1)
   
   #-------------------------------------------------------------------------------
   ## CALCULATE WINDOW
   
-  for(i in 1:length(years)){
+  for(i in 1:numYears){
     
     temperatureWindow[i] <- nimbleWeightedSlidingWindow(open,
                                                 duration,
@@ -95,4 +96,5 @@ slidingWindowModel <- nimbleCode({
   
 })
 }
+  return(slidingWindowModel)
 }
