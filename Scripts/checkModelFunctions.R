@@ -143,7 +143,7 @@ parametersToMonitor = c("open",
 slidingWindowModel <- defineNimbleModel(slidingWindowType = "integer")
 
 # manual running straight from Nimble
-
+set.seed(2026)
 testModel1 <- nimbleMCMC(code = slidingWindowModel,
                          data = dataInput,
                          constants,
@@ -194,11 +194,8 @@ MCMCtrace(testModel3, pdf = FALSE)
 
 # First step - run and use testModel1 above - saves time and code
 
-MCMCsummary(testModel1) # SLOPE IS OVER ESTIMATED HERE BUT OPEN + DURATION 
-# ARE BANG ON
-
 # Then run with the runNimbleModel code
-
+set.seed(2026)
 testModel4 <- nimbleModel(slidingWindowType = "integer",
                           dataInput = dataInput,
                           constants = constants,
@@ -209,6 +206,7 @@ testModel4 <- nimbleModel(slidingWindowType = "integer",
                           parametersToMonitor = parametersToMonitor,
                           nthin = nthin) # RUNS AT LEAST 19.02.2026
 
+MCMCsummary(testModel1)
 MCMCsummary(testModel4) 
 
 ### Test 2: does it give same answer as nimbleModel: weighted? ####
