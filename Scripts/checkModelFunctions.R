@@ -107,23 +107,25 @@ summary(lm(biologicalVariable ~ meanTemperature,
 
 # do manual and shared set up of model inputs
 
-niter <- 5000000
-nburnin <- 400000
+niter <- 50000
+nburnin <- 5000
 nchains <- 2
 nthin <- 5
 
 # set up initial values 
 
 dataInput <- list(temperature = temperatureVariableDF,
-                   biologicalVariable = biologicalVariable)
+                  # mean centre the biological variable
+                  biologicalVariable = biologicalVariable - mean(biologicalVariable))
 
 constants <- list(numYears = 100,
                   windowStarts = c(1,50),
                   windowDurations = c(1,49))
 
 set.seed(2026)
+# sum of open and duration must be < numDays
 inits <- list(open = round(runif(1, 1, 50)),
-              duration = round(runif(1, 1, 49)),
+              duration = round(runif(1, 1, 49)), 
               intercept = rnorm(1, 0, sd = 100),
               slope = rnorm(1, 0, sd = 10),
               error = rgamma(1, 2, 1))
@@ -150,13 +152,19 @@ testModel1 <- nimbleMCMC(code = slidingWindowModel,
                          nburnin = nburnin,
                          nchains = nchains, 
                          monitors = parametersToMonitor,
-                         thin = nthin)
+                         thin = nthin) # RUNS AT LEAST 19.02.2026
 
-testModel2 <- lm(biologicalVariable ~ meanTemperature, 
-                    data = temperatureMeansDFcombined)
+centredVariables <- temperatureMeansDFcombined %>%
+  mutate(centredBV = biologicalVariable - mean(biologicalVariable),
+         centredT = meanTemperature - mean(meanTemperature))
 
-MCMCsummary(testModel1)
-summary(testModel2)
+testModel2 <- lm(centredBV ~ centredT, 
+                    data = centredVariables)
+
+MCMCsummary(testModel1) # SLOPE IS OVER ESTIMATED HERE BUT OPEN + DURATION 
+# ARE BANG ON
+
+summary(testModel2) # PRETTY MUCH EXACTLY RIGHT
 
 
 ### Test 2: does the weighted model function give same results as manual? ####

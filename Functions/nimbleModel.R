@@ -40,14 +40,20 @@ for(i in 1:numYears){
   temperatureWindow[i] <- nimbleSlidingWindow(open,
                                               duration,
                                               temperature[,i])
+} # keep the loop just for temperature
+
+# make the temperature mean centred
+
+  centredTemperature[1:numYears] <- temperatureWindow[1:numYears] - mean(temperatureWindow[1:numYears])
 
 #-------------------------------------------------------------------------------
-## LIKELIHOOD FOR BIOLOGICAL VARIABLE
+## LIKELIHOOD FOR BIOLOGICAL VARIABLE - own loop
 
-  biologicalVariable[i] ~ dnorm((intercept 
-                                + (temperatureWindow[i]*slope)), 
-                                 sd = error)
+for(j in 1:numYears){
   
+  biologicalVariable[j] ~ dnorm((intercept 
+                                + (centredTemperature[j]*slope)), 
+                                 sd = error)
 }
   
 #-------------------------------------------------------------------------------
