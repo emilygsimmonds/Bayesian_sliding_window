@@ -1,4 +1,4 @@
-#### Nimble functions to run Nimble sliding window ############################## 
+#### Nimble functions to run Nimble sliding window ############################# 
 
 #' This script holds the function code for the sliding window Nimble function.
 #' DEBUGGED USING ELM: 03 model
@@ -15,7 +15,7 @@
 
 library(nimble)
 
-#### Function code ####
+#### Function code #############################################################
 
 ### Window 1: integer indices
 
