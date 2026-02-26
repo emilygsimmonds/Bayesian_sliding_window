@@ -21,7 +21,7 @@ library(nimble)
 
 #### function code ####
 
-nimbleModel <- function(slidingWindowType = c("integer",
+runNimbleModel <- function(slidingWindowType = c("integer",
                                               "weighted"),
                         dataInput,
                         constants,

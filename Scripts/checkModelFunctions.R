@@ -196,7 +196,7 @@ MCMCtrace(testModel3, pdf = FALSE)
 
 # Then run with the runNimbleModel code
 set.seed(2026)
-testModel4 <- nimbleModel(slidingWindowType = "integer",
+testModel4 <- runNimbleModel(slidingWindowType = "integer",
                           dataInput = dataInput,
                           constants = constants,
                           inits = inits, 
@@ -215,7 +215,7 @@ MCMCsummary(testModel4)
 
 # Then run with the runNimbleModel code
 set.seed(2026)
-testModel5 <- nimbleModel(slidingWindowType = "weighted",
+testModel5 <- runNimbleModel(slidingWindowType = "weighted",
                           dataInput = dataInput,
                           constants = constants,
                           inits = inits, 
