@@ -18,6 +18,7 @@
 #### load packages ####
 
 library(nimble)
+library(MCMCvis)
 
 #### function code ####
 
@@ -32,7 +33,6 @@ runNimbleModel <- function(slidingWindowType = c("integer",
                         parametersToMonitor,
                         nthin){
 
-  
   source("./Functions/nimbleModel.R")
   source("./Functions/nimbleSlidingWindow.R")
   
@@ -41,7 +41,7 @@ runNimbleModel <- function(slidingWindowType = c("integer",
   
 # then run in Nimble and return the output  
   
-  output <- nimbleMCMC(code = slidingWindowModel, 
+  modelRun <- nimbleMCMC(code = slidingWindowModel, 
                        data = dataInput,
                        constants = constants,
                        inits = inits,
@@ -51,6 +51,8 @@ runNimbleModel <- function(slidingWindowType = c("integer",
                        nchains = nchains,
                        thin = nthin)
   
-  return(output)
+  modelSummary <- summary(modelRun)
+  
+  return(modelSummary)
   
 }
