@@ -5,6 +5,7 @@
 #' Single function that has different options
 #' 
 #' Inputs:
+#' - seed to make repeatable, just a number
 #' - noise = numeric values from 1-10 indicating the standard deviation
 #' in the non-window part of the time series
 #' - mean = mean of the non-window days
@@ -27,7 +28,8 @@ library(tidyverse)
 
 #### Function code #############################################################
 
-simulateTempData <- function(noise,
+simulateTempData <- function(seed,
+                             noise,
                              mean,
                              meanSignal,
                              noiseSignal,
@@ -38,32 +40,33 @@ simulateTempData <- function(noise,
   
 # First, set up an index of years and days to iterate over
 years <- as.list(1:numYears) # just an index of years
-set.seed(2026)
+set.seed(seed)
 # index of year effect - sd = 1/5 mean
 yearEffect <- as.list(rnorm(numYears, 
                             mean = meanSignal, 
                             sd = meanSignal/5)) 
 
 temperatureVariable <- map2(.x = years, .y = yearEffect, function(.x, .y){
-  set.seed(.x)
+  set.seed(seed)
   keyWindow <- rnorm(windowDuration, mean = .y,
                      sd = noiseSignal)
-  set.seed(.x)
+  set.seed(seed)
   preWindow <- rnorm(windowOpen-1, 
                      mean = mean,
                      sd = noise)
-  set.seed(.x)
+  set.seed(seed)
   postWindow <- rnorm((numDays-(windowOpen+windowDuration-1)), 
                       mean = mean, 
                       sd = noise)
-  set.seed(.x)
+  set.seed(seed)
   yearTemperature <- data.frame(year = c(preWindow,
                                             keyWindow,
                                             postWindow))
   colnames(yearTemperature) <- c(paste0("year", .x))
   return(yearTemperature)
 }
-)
+) %>%
+  bind_cols()
 
 return(temperatureVariable)
 
