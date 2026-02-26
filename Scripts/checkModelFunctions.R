@@ -52,7 +52,7 @@ temperatureVariable <- map2(x, y, ~ {
   
   return(yearlyTemperature)
 }
-)
+) %>% bind_cols()
 
 # test that the signal is strong enough
 plottingTemperature <- temperatureVariable %>%
