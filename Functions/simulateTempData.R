@@ -44,21 +44,21 @@ set.seed(seed)
 # index of year effect - sd = 1/5 mean
 yearEffect <- as.list(rnorm(numYears, 
                             mean = meanSignal, 
-                            sd = meanSignal/5)) 
+                            sd = meanSignal/5))
 
+# need to ensure a different seed for each year
 temperatureVariable <- map2(.x = years, .y = yearEffect, function(.x, .y){
-  set.seed(seed)
+  set.seed(.x)
   keyWindow <- rnorm(windowDuration, mean = .y,
                      sd = noiseSignal)
-  set.seed(seed)
+  set.seed(.x)
   preWindow <- rnorm(windowOpen-1, 
                      mean = mean,
                      sd = noise)
-  set.seed(seed)
+  set.seed(.x)
   postWindow <- rnorm((numDays-(windowOpen+windowDuration-1)), 
                       mean = mean, 
                       sd = noise)
-  set.seed(seed)
   yearTemperature <- data.frame(year = c(preWindow,
                                             keyWindow,
                                             postWindow))

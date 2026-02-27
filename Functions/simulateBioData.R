@@ -33,16 +33,14 @@ simulateBioData <- function(seed,
                             windowOpen,
                             windowDuration){
 
-tempDataList <- as.list(tempData)
-  
-biologicalVariable <- map(.x = tempDataList, function(.x){
-# create a biological variable that responds to part of the temperature series
-  windowTemp <- mean(.x[windowOpen:(windowOpen + windowDuration)])
-  
-  set.seed(seed)
-  biologicalVariable <- rnorm(1, 
-                              mean = intercept + 
-                                (windowTemp*slope),
-                              sd = bioNoise)
-  
-})}
+windowTemp <- colMeans(tempData[windowOpen:(windowOpen + windowDuration),])
+
+set.seed(seed)
+biologicalVariable <- rnorm(ncol(tempData), 
+                            mean = (intercept + 
+                              (windowTemp*slope)),
+                            sd = bioNoise)
+
+return(biologicalVariable)
+
+}

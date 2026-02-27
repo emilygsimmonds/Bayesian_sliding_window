@@ -39,6 +39,8 @@ runNimbleModel <- function(slidingWindowType = c("integer",
   slidingWindowModel <- defineNimbleModel(slidingWindowType = 
                                             slidingWindowType)
   
+# compile the model
+  
 # then run in Nimble and return the output  
   
   modelRun <- nimbleMCMC(code = slidingWindowModel, 
@@ -51,8 +53,6 @@ runNimbleModel <- function(slidingWindowType = c("integer",
                        nchains = nchains,
                        thin = nthin)
   
-  modelSummary <- summary(modelRun)
-  
-  return(modelSummary)
+  return(modelRun)
   
 }
