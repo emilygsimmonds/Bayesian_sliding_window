@@ -110,7 +110,6 @@ simulatedTempData <- pmap(select(temperatureInputs, -tScenario),
                                                     ".rds"))
                           })
 
-#saveRDS(simulatedTempData, file = "./Data/SimulatedTempData1.RDS")
 write.csv(temperatureInputs, file = "./Data/TemperatureInputs1.csv")
 
 
@@ -123,9 +122,12 @@ write.csv(temperatureInputs, file = "./Data/TemperatureInputs1.csv")
 # take the temperature inputs dataframe and reduce to columns I need
 biologicalInputsA <- temperatureInputs %>% select(windowOpen, windowDuration)
 
-# now try and expand to include the actual temperature data
+# now try and expand to include the actual temperature data - now need as a file
+# name rather than the actual data
+tempDataNames <- list.files("./Data/TempData/")
+
 biologicalInputsB <- biologicalInputsA %>%
-  mutate(tempData = simulatedTempData) 
+  mutate(tempDataNames = tempDataNames) 
 
 # noise in relationship between temp and biology 1 to 10
 bioNoise <- c(2.5, 5)
@@ -161,18 +163,45 @@ biologicalInputs <- biologicalInputsC %>%
            bioNoise, 
            slope, 
            intercept, 
-           tempData, 
+           tempDataNames, 
            windowOpen, 
            windowDuration,
-        bScenario)
+        bScenario) %>%
+  rowid_to_column("bioMarker")
 
 #### Create biological data ####################################################
 
-simulatedBioData <- pmap(select(biologicalInputs, -bScenario), 
-                         .f = simulateBioData)
+simulatedBioData <- pmap(select(biologicalInputs, -bScenario),
+                         function(bioMarker, seed, bioNoise, 
+                                  slope, intercept,
+                                  tempDataNames, windowOpen, 
+                                  windowDuration){
+                           
+                           # first import the temperature data
+                           tempData <- readRDS(paste0("./Data/TempData/", 
+                                                      tempDataNames))
+                           
+                           # then create the bioData
+                           results <- simulateBioData(seed = seed,
+                                              bioNoise = noise,
+                                              slope = slope,
+                                              intercept = intercept,
+                                              tempData = tempData,
+                                              windowOpen = windowOpen,
+                                              windowDuration = windowDuration)
+                           saveRDS(results, paste0("./Data/BioData/bioData", 
+                                                   bioMarker,
+                                                   ".rds"))  
+                         })
 
-saveRDS(simulatedBioData, file = "./Data/SimulatedBioData1.RDS")
-# save a version of the tempData that produced the BioData
-saveRDS(select(biologicalInputs, tempData), file = "./Data/simulatedTempDataBio1.RDS")
+# check three of them
+test1 <- readRDS("./Data/BioData/bioData1.rds")
+test2 <- readRDS("./Data/BioData/bioData2.rds")
+test50 <- readRDS("./Data/BioData/bioData50.rds")
+
+test1
+test2
+test50 # all different! That's what I wanted
+
 # need to remove tempData column from the inputs to save
-write.csv(select(biologicalInputs, -tempData), file = "./Data/BiologicalInputs1.csv") 
+write.csv(biologicalInputs, file = "./Data/BiologicalInputs1.csv") 
