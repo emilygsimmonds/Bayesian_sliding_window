@@ -86,15 +86,31 @@ temperatureInputs <- expand_grid(seed, # noise scenario
                         numDays,
                         windowOpen = windowOpen[2],
                         windowDuration,
-                        tScenario = "duration")) # label the scenarios
-
+                        tScenario = "duration")) %>% # label the scenarios 
+  rowid_to_column("marker")
 
 #### Create temperature data ###################################################
 
 simulatedTempData <- pmap(select(temperatureInputs, -tScenario), 
-                          .f = simulateTempData)
+                          function(marker, seed, noise,
+                                   mean, meanSignal, noiseSignal, 
+                                   numYears, numDays, 
+                                   windowOpen, windowDuration){
+                            results <- simulateTempData(seed = seed,
+                                                noise = noise,
+                                                mean = mean,
+                                                meanSignal = meanSignal,
+                                                noiseSignal = noiseSignal,
+                                                numYears = numYears,
+                                                numDays = numDays,
+                                                windowOpen = windowOpen,
+                                                windowDuration = windowDuration)
+                            saveRDS(results, paste0("./Data/TempData/tempData", 
+                                                    marker,
+                                                    ".rds"))
+                          })
 
-saveRDS(simulatedTempData, file = "./Data/SimulatedTempData1.RDS")
+#saveRDS(simulatedTempData, file = "./Data/SimulatedTempData1.RDS")
 write.csv(temperatureInputs, file = "./Data/TemperatureInputs1.csv")
 
 
