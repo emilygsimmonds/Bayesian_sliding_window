@@ -11,7 +11,7 @@
 #' nburnin = amount of burn in
 #' parametersToMonitor = list of parameter names to be tracked and reported
 #' nthin = thinning parameter
-#' 
+#' seed = needs to be length nchains
 
 #### Set up ####################################################################
 
@@ -31,14 +31,14 @@ runNimbleModel <- function(slidingWindowType = c("integer",
                         nchains, 
                         nburnin,
                         parametersToMonitor,
-                        nthin){
+                        nthin,
+                        seed){
 
   source("./Functions/nimbleModel.R")
   source("./Functions/nimbleSlidingWindow.R")
   
   slidingWindowModel <- defineNimbleModel(slidingWindowType = 
                                             slidingWindowType)
-  
 # compile the model
   
 # then run in Nimble and return the output  
@@ -51,7 +51,10 @@ runNimbleModel <- function(slidingWindowType = c("integer",
                        niter = niter,
                        nburnin = nburnin,
                        nchains = nchains,
-                       thin = nthin)
+                       thin = nthin,
+                       setSeed = seed)
+  
+  saveRDS(modelRun, file = paste0("./Data/ModelResults"))
   
   return(modelRun)
   

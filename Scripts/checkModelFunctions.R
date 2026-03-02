@@ -124,11 +124,7 @@ constants <- list(numYears = 100,
 
 set.seed(2026)
 # sum of open and duration must be < numDays
-inits <- list(open = round(runif(1, 1, 50)),
-              duration = round(runif(1, 1, 49)), 
-              intercept = rnorm(1, 0, sd = 100),
-              slope = rnorm(1, 0, sd = 10),
-              error = rgamma(1, 2, 1))
+
 
 parametersToMonitor = c("open",
              "duration", 

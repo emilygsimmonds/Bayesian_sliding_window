@@ -17,7 +17,7 @@ source("./Functions/simulateBioData.R")
 #### Inputs for temperature data ###############################################
 
 # noise in non-window segment varies from 1 to 5
-noise <- seq(1, 5, length.out = 2)
+noise <- seq(1, 5, length.out = 3)
 
 # mean temperature in non-window segment varies from 0.1 to 5
 mean <- seq(0.1, 5, length.out = 3)
@@ -47,19 +47,52 @@ seed <- seq(1, 10, 1)
 
 # expand a grid to all unique combinations - need to be in same order as in 
 # function to make sure it can be used with pmap
-temperatureInputs <- expand_grid(seed,
+temperatureInputs <- expand_grid(seed, # noise scenario
                                  noise,
-                                 mean,
+                                 mean = mean[2],
                                  meanSignal,
                                  noiseSignal,
                                  numYears,
                                  numDays,
-                                 windowOpen,
-                                 windowDuration) 
+                                 windowOpen = windowOpen[2],
+                                 windowDuration = windowDuration[2],
+                                 tScenario = "noise") %>%
+  bind_rows(expand_grid(seed, # mean scenario
+                        noise = noise[2],
+                        mean,
+                        meanSignal,
+                        noiseSignal,
+                        numYears,
+                        numDays,
+                        windowOpen = windowOpen[2],
+                        windowDuration = windowDuration[2],
+                        tScenario = "mean")) %>%
+  bind_rows(expand_grid(seed, # window open scenario
+                        noise = noise[2],
+                        mean = mean[2],
+                        meanSignal,
+                        noiseSignal,
+                        numYears,
+                        numDays,
+                        windowOpen,
+                        windowDuration = windowDuration[2],
+                        tScenario = "open")) %>%
+  bind_rows(expand_grid(seed, # window duration scenario
+                        noise = noise[2],
+                        mean = mean[2],
+                        meanSignal,
+                        noiseSignal,
+                        numYears,
+                        numDays,
+                        windowOpen = windowOpen[2],
+                        windowDuration,
+                        tScenario = "duration")) # label the scenarios
+
 
 #### Create temperature data ###################################################
 
-simulatedTempData <- pmap(temperatureInputs, .f = simulateTempData)
+simulatedTempData <- pmap(select(temperatureInputs, -tScenario), 
+                          .f = simulateTempData)
 
 saveRDS(simulatedTempData, file = "./Data/SimulatedTempData1.RDS")
 write.csv(temperatureInputs, file = "./Data/TemperatureInputs1.csv")
@@ -92,8 +125,18 @@ seed <- seq(1, 10, 1)
 
 # now expand grid to include the extra axes
 
-biologicalInputsC <- expand_grid(biologicalInputsB, bioNoise, slope, 
-                                 intercept, seed)
+biologicalInputsC <- expand_grid(biologicalInputsB, 
+                                 bioNoise, # bnoise scenario
+                                 slope = slope[2], 
+                                 intercept, 
+                                 seed,
+                                 bScenario = "bnoise") %>%
+  bind_rows(expand_grid(biologicalInputsB, 
+                        bioNoise = bioNoise[2], 
+                        slope, # bslope scenario
+                        intercept, 
+                        seed,
+                        bScenario = "slope"))
 
 ### reorder column names to be in order expected by pmap
 
@@ -104,12 +147,16 @@ biologicalInputs <- biologicalInputsC %>%
            intercept, 
            tempData, 
            windowOpen, 
-           windowDuration)
+           windowDuration,
+        bScenario)
 
 #### Create biological data ####################################################
 
-simulatedBioData <- pmap(biologicalInputs, .f = simulateBioData)
+simulatedBioData <- pmap(select(biologicalInputs, -bScenario), 
+                         .f = simulateBioData)
 
 saveRDS(simulatedBioData, file = "./Data/SimulatedBioData1.RDS")
+# save a version of the tempData that produced the BioData
+saveRDS(select(biologicalInputs, tempData), file = "./Data/simulatedTempDataBio1.RDS")
 # need to remove tempData column from the inputs to save
-write.csv(biologicalInputs[,-5], file = "./Data/BiologicalInputs1.csv") 
+write.csv(select(biologicalInputs, -tempData), file = "./Data/BiologicalInputs1.csv") 
