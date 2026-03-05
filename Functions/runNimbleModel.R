@@ -53,8 +53,7 @@ runNimbleModel <- function(slidingWindowType = c("integer",
                        nchains = nchains,
                        thin = nthin,
                        setSeed = seed)
-  
-  saveRDS(modelRun, file = paste0("./Data/ModelResults"))
+
   
   return(modelRun)
   

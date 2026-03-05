@@ -5,7 +5,5 @@ Emily's notes to self (19.02.26)
 
 To do:
 
-- Rewrite to save out simulated datasets individually
-- Rerun the simulated data
 - Start to run the actual simulations
 - Update ReadME to be project overview
