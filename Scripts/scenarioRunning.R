@@ -1,4 +1,4 @@
-#### Check script: Model Running Functions #####################################
+#### Running script: Model Running Functions ###################################
 
 #' This script checks the model and running functions in scripts:
 #' 'nimbleModel.R'
@@ -104,7 +104,7 @@ modelInputs <- data.frame(constants = I(list(constants)),
 availableCores()
 
 # check time for 5 runs parallel - should be faster
-plan(multisession, workers = 20)
+plan(multisession)
 
 tic()
 future_pmap(modelInputs, 
