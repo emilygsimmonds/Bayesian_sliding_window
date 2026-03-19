@@ -57,8 +57,8 @@ slidingWindowModel <- defineNimbleModel(slidingWindowType = "integer")
 # slidingWindowType, dataInput, constants, inits, niter, nburnin, 
 # nchains, parametersToMonitor, nthin, seed
 
-niter <- 50000
-nburnin <- 5000
+niter <- 500000
+nburnin <- 50000
 nchains <- 2
 nthin <- 5
 seed <- 1:nchains

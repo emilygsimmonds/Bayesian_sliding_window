@@ -8,6 +8,7 @@
 #### load packages ####
 
 library(tidyverse)
+library(furrr)
 
 #### source code ####
 
@@ -16,11 +17,11 @@ source("./Functions/simulateBioData.R")
 
 #### Inputs for temperature data ###############################################
 
-# noise in non-window segment varies from 1 to 5
-noise <- seq(1, 5, length.out = 3)
+# noise in non-window segment set at 5
+noise <- 5
 
-# mean temperature in non-window segment varies from 0.1 to 5
-mean <- seq(0.1, 5, length.out = 3)
+# mean temperature in non-window set at 5
+mean <- 5
 
 # mean of window segment held at 10
 meanSignal <- 10
@@ -35,58 +36,38 @@ numYears <- 50
 numDays <- 100
 
 # windowOpen from 1 to 50
-windowOpen <- c(1, 25, 50)
+windowOpen <- round(seq(1, 50, length.out = 5))
 
-# windowDuration from 1-30
-windowDuration <- c(1, 15, 30)
+# windowDuration from 1-40
+windowDuration <- c(1, 10, 20, 30, 40)
 
-# seed from 1:10 but testing at 1 :10
-seed <- seq(1, 10, 1)
+# seed from 1:50
+seed <- seq(1, 50, 1)
 
 ### Want to run each combination 100 times initially
 
 # expand a grid to all unique combinations - need to be in same order as in 
 # function to make sure it can be used with pmap
-temperatureInputs <- expand_grid(seed, # noise scenario
+temperatureInputs <- expand_grid(seed, # open and duration scenarios
                                  noise,
-                                 mean = mean[2],
+                                 mean,
                                  meanSignal,
                                  noiseSignal,
                                  numYears,
                                  numDays,
-                                 windowOpen = windowOpen[2],
-                                 windowDuration = windowDuration[2],
-                                 tScenario = "noise") %>%
-  bind_rows(expand_grid(seed, # mean scenario
-                        noise = noise[2],
-                        mean,
-                        meanSignal,
-                        noiseSignal,
-                        numYears,
-                        numDays,
-                        windowOpen = windowOpen[2],
-                        windowDuration = windowDuration[2],
-                        tScenario = "mean")) %>%
-  bind_rows(expand_grid(seed, # window open scenario
-                        noise = noise[2],
-                        mean = mean[2],
-                        meanSignal,
-                        noiseSignal,
-                        numYears,
-                        numDays,
-                        windowOpen,
-                        windowDuration = windowDuration[2],
-                        tScenario = "open")) %>%
-  bind_rows(expand_grid(seed, # window duration scenario
-                        noise = noise[2],
-                        mean = mean[2],
-                        meanSignal,
-                        noiseSignal,
-                        numYears,
-                        numDays,
-                        windowOpen = windowOpen[2],
-                        windowDuration,
-                        tScenario = "duration")) %>% # label the scenarios 
+                                 windowOpen = windowOpen[3],
+                                 windowDuration = windowDuration,
+                                 tScenario = "noise") %>% 
+  bind_rows(expand_grid(seed, # open and duration scenarios
+              noise,
+              mean,
+              meanSignal,
+              noiseSignal,
+              numYears,
+              numDays,
+              windowOpen = windowOpen,
+              windowDuration = windowDuration[3],
+              tScenario = "noise")) %>%# label the scenarios 
   rowid_to_column("marker")
 
 #### Create temperature data ###################################################
@@ -124,28 +105,28 @@ biologicalInputsA <- temperatureInputs %>% select(windowOpen, windowDuration)
 
 # now try and expand to include the actual temperature data - now need as a file
 # name rather than the actual data
-tempDataNames <- list.files("./Data/TempData/")
+tempDataNames <- list.files("./Data/TempData/", pattern = "rds")
 
 biologicalInputsB <- biologicalInputsA %>%
   mutate(tempDataNames = tempDataNames) 
 
 # noise in relationship between temp and biology 1 to 10
-bioNoise <- c(2.5, 5)
+bioNoise <- c(2.5, 5, 10)
 
 # slope of temperature biology relationship 0 to 10
-slope <- seq(0, 10, length.out = 3)
+slope <- seq(-6, 6, by = 2)
 
 # intercept fixed at 20
 intercept <- 20
 
-# seed from 1:100 but testing at 1 :10
-seed <- seq(1, 10, 1)
+# seed from 1:50
+seed <- seq(1, 50, 1)
 
 # now expand grid to include the extra axes
 
 biologicalInputsC <- expand_grid(biologicalInputsB, 
                                  bioNoise, # bnoise scenario
-                                 slope = slope[2], 
+                                 slope = slope[c(8)], 
                                  intercept, 
                                  seed,
                                  bScenario = "bnoise") %>%
@@ -171,7 +152,9 @@ biologicalInputs <- biologicalInputsC %>%
 
 #### Create biological data ####################################################
 
-simulatedBioData <- pmap(select(biologicalInputs, -bScenario),
+plan(multisession)
+
+simulatedBioData <- future_pmap(select(biologicalInputs, -bScenario),
                          function(bioMarker, seed, bioNoise, 
                                   slope, intercept,
                                   tempDataNames, windowOpen, 
