@@ -126,7 +126,7 @@ seed <- seq(1, 50, 1)
 
 biologicalInputsC <- expand_grid(biologicalInputsB, 
                                  bioNoise, # bnoise scenario
-                                 slope = slope[c(8)], 
+                                 slope = slope[5], 
                                  intercept, 
                                  seed,
                                  bScenario = "bnoise") %>%
@@ -175,12 +175,13 @@ simulatedBioData <- future_pmap(select(biologicalInputs, -bScenario),
                            saveRDS(results, paste0("./Data/BioData/bioData", 
                                                    bioMarker,
                                                    ".rds"))  
-                         })
+                         }, .options = furrr_options(seed = TRUE))
 
 # check three of them
+test1 <- readRDS("./Data/TempData/TempData1.rds")
 test1 <- readRDS("./Data/BioData/bioData1.rds")
 test2 <- readRDS("./Data/BioData/bioData2.rds")
-test50 <- readRDS("./Data/BioData/bioData50.rds")
+test50 <- readRDS("./Data/BioData/bioData250000.rds")
 
 test1
 test2

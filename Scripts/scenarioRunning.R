@@ -101,7 +101,7 @@ modelInputs <- data.frame(constants = I(list(constants)),
 
 
 #### Parallel running ##########################################################
-availableCores()
+#availableCores()
 
 # check time for 5 runs parallel - should be faster
 plan(multisession)
