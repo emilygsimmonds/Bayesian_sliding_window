@@ -108,7 +108,7 @@ plan(multisession)
 
 tic()
 future_pmap(modelInputs, 
-            function(slidingWindowType,
+            safely(function(slidingWindowType,
                      biologicalFileNames,
                      temperatureFileNames,
                      constants,
@@ -145,5 +145,5 @@ future_pmap(modelInputs,
                                                  str_sub(biologicalFileNames, 8, -5),
                                                  ".rds"))
               
-            }, .options = furrr_options(seed = TRUE))
+            }), .options = furrr_options(seed = TRUE))
 toc()
