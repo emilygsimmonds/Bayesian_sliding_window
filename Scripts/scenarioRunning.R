@@ -104,7 +104,7 @@ modelInputs <- data.frame(constants = I(list(constants)),
 #availableCores()
 
 # check time for 5 runs parallel - should be faster
-plan(multisession)
+plan(multisession, workers = 35)
 
 tic()
 future_pmap(modelInputs, 
