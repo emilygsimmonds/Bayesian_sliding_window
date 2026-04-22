@@ -43,16 +43,38 @@ runNimbleModel <- function(slidingWindowType = c("integer",
   
 # then run in Nimble and return the output  
   
-  modelRun <- nimbleMCMC(code = slidingWindowModel, 
-                       data = dataInput,
-                       constants = constants,
-                       inits = inits,
-                       monitors = parametersToMonitor,
-                       niter = niter,
-                       nburnin = nburnin,
-                       nchains = nchains,
-                       thin = nthin,
-                       setSeed = seed)
+  rModel <- nimbleModel(code = slidingWindowModel, 
+                       data = dataInput, 
+                       constants = constants, 
+                       inits = inits)
+  
+  cModel <- compileNimble(rModel) 
+  
+  conf <- configureMCMC(rModel, 
+                        monitors = parametersToMonitor) 
+  
+  rMCMC <- buildMCMC(conf) 
+  
+  cMCMC <- compileNimble(rMCMC, 
+                         project = rModel) 
+  
+  modelRun <- runMCMC(cMCMC, 
+                      niter = niter, 
+                      nburnin = nburnin, 
+                      thin = nthin, 
+                      nchains = nchains, 
+                      setSeed = seed)
+  
+  #modelRun <- nimbleMCMC(code = slidingWindowModel, 
+  #                     data = dataInput,
+  #                     constants = constants,
+  #                     inits = inits,
+  #                     monitors = parametersToMonitor,
+  #                     niter = niter,
+  #                     nburnin = nburnin,
+  #                     nchains = nchains,
+  #                     thin = nthin,
+  #                     setSeed = seed)
 
   
   return(modelRun)
