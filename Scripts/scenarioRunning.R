@@ -60,7 +60,7 @@ slidingWindowModel <- defineNimbleModel(slidingWindowType = "integer")
 niter <- 500000
 nburnin <- 50000
 nchains <- 2
-nthin <- 5
+nthin <- 10
 seed <- 1:nchains
 
 constants <- list(numYears = 50,
@@ -145,5 +145,8 @@ future_pmap(modelInputs,
                                                  str_sub(biologicalFileNames, 8, -5),
                                                  ".rds"))
               
+              return(str_sub(biologicalFileNames, 8, -5))
+              
             }), .options = furrr_options(seed = TRUE))
 toc()
+
