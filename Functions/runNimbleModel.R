@@ -12,6 +12,8 @@
 #' parametersToMonitor = list of parameter names to be tracked and reported
 #' nthin = thinning parameter
 #' seed = needs to be length nchains
+#' cModel = compiled Nimble model
+#' cMCMC = compiled sampler
 
 #### Set up ####################################################################
 
@@ -32,7 +34,9 @@ runNimbleModel <- function(slidingWindowType = c("integer",
                         nburnin,
                         parametersToMonitor,
                         nthin,
-                        seed){
+                        seed,
+                        cModel,
+                        cMCMC){
 
   source("./Functions/nimbleModel.R")
   source("./Functions/nimbleSlidingWindow.R")
@@ -43,20 +47,23 @@ runNimbleModel <- function(slidingWindowType = c("integer",
   
 # then run in Nimble and return the output  
   
-  rModel <- nimbleModel(code = slidingWindowModel, 
-                       data = dataInput, 
-                       constants = constants, 
-                       inits = inits)
+# rModel <- nimbleModel(code = slidingWindowModel, 
+#                       data = dataInput, 
+#                       constants = constants, 
+#                       inits = inits)
+#  
+#  cModel <- compileNimble(rModel) 
+#  
+#  conf <- configureMCMC(rModel, 
+#                        monitors = parametersToMonitor) 
+#  
+#  rMCMC <- buildMCMC(conf) 
+#  
+#  cMCMC <- compileNimble(rMCMC, 
+#                         project = rModel) 
   
-  cModel <- compileNimble(rModel) 
-  
-  conf <- configureMCMC(rModel, 
-                        monitors = parametersToMonitor) 
-  
-  rMCMC <- buildMCMC(conf) 
-  
-  cMCMC <- compileNimble(rMCMC, 
-                         project = rModel) 
+  cModel$setData(dataInput)        
+  cModel$setInits(inits)
   
   modelRun <- runMCMC(cMCMC, 
                       niter = niter, 

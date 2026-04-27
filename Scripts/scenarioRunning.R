@@ -104,7 +104,7 @@ modelInputs <- data.frame(constants = I(list(constants)),
 #availableCores()
 
 # check time for 5 runs parallel - should be faster
-plan(multisession, workers = 35)
+plan(multisession, workers = availableCores() - 5)
 
 tic()
 future_pmap(modelInputs, 
@@ -129,6 +129,21 @@ future_pmap(modelInputs,
               # combine the simulated datasets to create dataInput
               dataInputs <- createDataInput(temperatureData, biologicalData)
               
+              rModel <- nimbleModel(code = slidingWindowModel, 
+                                    data = dataInputs, 
+                                    constants = constants, 
+                                    inits = inits)
+              
+              cModel <- compileNimble(rModel) 
+              
+              conf <- configureMCMC(rModel, 
+                                    monitors = parametersToMonitor) 
+              
+              rMCMC <- buildMCMC(conf) 
+              
+              cMCMC <- compileNimble(rMCMC, 
+                                     project = rModel) 
+              
               # run the model and save the output
               modelResult <- runNimbleModel(slidingWindowType = slidingWindowType,
                                             dataInput = dataInputs,
@@ -139,7 +154,9 @@ future_pmap(modelInputs,
                                             nburnin = nburnin,
                                             parametersToMonitor = parametersToMonitor,
                                             nthin = nthin,
-                                            seed = seed)
+                                            seed = seed,
+                                            cModel = cModel,
+                                            cMCMC = cMCMC)
               
               saveRDS(modelResult, file = paste0("./Data/ModelResults/ModelResult",
                                                  str_sub(biologicalFileNames, 8, -5),
@@ -147,7 +164,7 @@ future_pmap(modelInputs,
               
               return(str_sub(biologicalFileNames, 8, -5))
               
-            }), .options = furrr_options(seed = TRUE)
+            }, .options = furrr_options(seed = TRUE))
 toc()
 
 
