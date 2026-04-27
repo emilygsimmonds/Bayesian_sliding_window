@@ -103,11 +103,22 @@ modelInputs <- data.frame(constants = I(list(constants)),
 #### Parallel running ##########################################################
 #availableCores()
 
+# create batches to run using markers
+
+bNoiseMarker <- which(modelInputs$biologicalFileNames %in% paste0("bioData",
+  biologicalInputs$bioMarker[which(biologicalInputs$bScenario == 
+                                                   "bnoise")], ".rds"))
+
+bSlopeMarker <- which(modelInputs$biologicalFileNames %in% paste0("bioData",
+                biologicalInputs$bioMarker[which(biologicalInputs$bScenario == 
+                "slope")], ".rds"))
+
+
 # check time for 5 runs parallel - should be faster
 plan(multisession, workers = availableCores() - 5)
 
 tic()
-future_pmap(modelInputs, 
+future_pmap(modelInputs[bNoiseMarker,], 
             safely(function(slidingWindowType,
                      biologicalFileNames,
                      temperatureFileNames,
