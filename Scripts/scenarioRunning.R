@@ -108,7 +108,7 @@ plan(multisession, workers = availableCores() - 5)
 
 tic()
 future_pmap(modelInputs, 
-            function(slidingWindowType,
+            safely(function(slidingWindowType,
                      biologicalFileNames,
                      temperatureFileNames,
                      constants,
@@ -164,7 +164,7 @@ future_pmap(modelInputs,
               
               return(str_sub(biologicalFileNames, 8, -5))
               
-            }, .options = furrr_options(seed = TRUE))
+            }), .options = furrr_options(seed = TRUE))
 toc()
 
 
