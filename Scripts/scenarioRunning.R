@@ -115,10 +115,10 @@ bSlopeMarker <- which(modelInputs$biologicalFileNames %in% paste0("bioData",
 
 
 # check time for 5 runs parallel - should be faster
-plan(multisession, workers = availableCores() - 5)
+plan(multisession, workers = availableCores() - 20)
 
 tic()
-future_pmap(modelInputs[bNoiseMarker,], 
+future_pmap(modelInputs[bNoiseMarker[1],], 
             safely(function(slidingWindowType,
                      biologicalFileNames,
                      temperatureFileNames,
@@ -140,20 +140,20 @@ future_pmap(modelInputs[bNoiseMarker,],
               # combine the simulated datasets to create dataInput
               dataInputs <- createDataInput(temperatureData, biologicalData)
               
-              rModel <- nimbleModel(code = slidingWindowModel, 
-                                    data = dataInputs, 
-                                    constants = constants, 
-                                    inits = inits)
+              #rModel <- nimbleModel(code = slidingWindowModel, 
+              #                      data = dataInputs, 
+              #                      constants = constants, 
+              #                      inits = inits)
               
-              cModel <- compileNimble(rModel) 
+              #cModel <- compileNimble(rModel) 
               
-              conf <- configureMCMC(rModel, 
-                                    monitors = parametersToMonitor) 
+              #conf <- configureMCMC(rModel, 
+              #                      monitors = parametersToMonitor) 
               
-              rMCMC <- buildMCMC(conf) 
+              #rMCMC <- buildMCMC(conf) 
               
-              cMCMC <- compileNimble(rMCMC, 
-                                     project = rModel) 
+              #cMCMC <- compileNimble(rMCMC, 
+              #                       project = rModel) 
               
               # run the model and save the output
               modelResult <- runNimbleModel(slidingWindowType = slidingWindowType,
@@ -165,9 +165,7 @@ future_pmap(modelInputs[bNoiseMarker,],
                                             nburnin = nburnin,
                                             parametersToMonitor = parametersToMonitor,
                                             nthin = nthin,
-                                            seed = seed,
-                                            cModel = cModel,
-                                            cMCMC = cMCMC)
+                                            seed = seed)
               
               saveRDS(modelResult, file = paste0("./Data/ModelResults/ModelResult",
                                                  str_sub(biologicalFileNames, 8, -5),

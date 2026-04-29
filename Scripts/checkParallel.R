@@ -80,7 +80,7 @@ modelInputs <- data.frame(constants = I(list(constants)),
                           inits = I(list(inits)),
                           parametersToMonitor = I(list(parametersToMonitor)),
                           seed = I(list(seed))) %>%
-  .[rep(1, 6000),] %>%
+  .[rep(1,  length(temperatureFileNames)),] %>%
   mutate(temperatureFileNames = temperatureFileNames,
          niter = niter,
          nburnin = nburnin,
@@ -137,11 +137,13 @@ slidingWindowModel <- defineNimbleModel(slidingWindowType = "integer")
 # slidingWindowType, dataInput, constants, inits, niter, nburnin, 
 # nchains, parametersToMonitor, nthin, seed
 
-niter <- 50000
-nburnin <- 5000
+
+niter <- 500000
+nburnin <- 50000
 nchains <- 2
-nthin <- 5
+nthin <- 10
 seed <- 1:nchains
+
 
 constants <- list(numYears = 50,
                   windowStarts = c(1,50),
@@ -170,7 +172,7 @@ modelInputs <- data.frame(constants = I(list(constants)),
                           inits = I(list(inits)),
                           parametersToMonitor = I(list(parametersToMonitor)),
                           seed = I(list(seed))) %>%
-  .[rep(1, 6000),] %>%
+  .[rep(1, length(temperatureFileNames)),] %>%
   mutate(temperatureFileNames = temperatureFileNames,
          niter = niter,
          nburnin = nburnin,
@@ -183,94 +185,100 @@ plan(sequential)
 
 tic()
 testSequential <- future_pmap(modelInputs[1:5,], 
-                              function(slidingWindowType,
-                                       biologicalFileNames,
-                                       temperatureFileNames,
-                                       constants,
-                                       inits,
-                                       niter,
-                                       nburnin,
-                                       nchains,
-                                       parametersToMonitor,
-                                       nthin,
-                                       seed){
-        
-        # first read in temperature and biological data
-        temperatureData <- readRDS(paste0("./Data/TempData/", 
-                                          temperatureFileNames))    
-        biologicalData <- readRDS(paste0("./Data/BioData/", 
-                                         biologicalFileNames))  
-        
-        # combine the simulated datasets to create dataInput
-        dataInputs <- createDataInput(temperatureData, biologicalData)
-        
-        # run the model and save the output
-        modelResult <- runNimbleModel(slidingWindowType = slidingWindowType,
-                                      dataInput = dataInputs,
-                                      constants = constants,
-                                      inits = inits, 
-                                      niter = niter, 
-                                      nchains = nchains, 
-                                      nburnin = nburnin,
-                                      parametersToMonitor = parametersToMonitor,
-                                      nthin = nthin,
-                                      seed = seed)
+                              safely(function(slidingWindowType,
+                                              biologicalFileNames,
+                                              temperatureFileNames,
+                                              constants,
+                                              inits,
+                                              niter,
+                                              nburnin,
+                                              nchains,
+                                              parametersToMonitor,
+                                              nthin,
+                                              seed){
                                 
-          saveRDS(modelResult, file = paste0("./Data/Checking/Sequential",
-                             str_sub(biologicalFileNames, 8, -5),
-                             ".rds"))
+                                # first read in temperature and biological data
+                                temperatureData <- readRDS(paste0("./Data/TempData/", 
+                                                                  temperatureFileNames))    
+                                biologicalData <- readRDS(paste0("./Data/BioData/", 
+                                                                 biologicalFileNames))  
                                 
-                              }, .options = furrr_options(seed = TRUE))
+                                # combine the simulated datasets to create dataInput
+                                dataInputs <- createDataInput(temperatureData, biologicalData)
+                                
+                                # run the model and save the output
+                                modelResult <- runNimbleModel(slidingWindowType = slidingWindowType,
+                                                              dataInput = dataInputs,
+                                                              constants = constants,
+                                                              inits = inits, 
+                                                              niter = niter, 
+                                                              nchains = nchains, 
+                                                              nburnin = nburnin,
+                                                              parametersToMonitor = parametersToMonitor,
+                                                              nthin = nthin,
+                                                              seed = seed)
+                                
+                                saveRDS(modelResult, file = paste0("./Data/Checking/Sequential",
+                                                                   str_sub(biologicalFileNames, 8, -5),
+                                                                   ".rds"))
+                                
+                                return(str_sub(biologicalFileNames, 8, -5))
+                                
+                              }), .options = furrr_options(seed = TRUE))
+toc()
 
-toc() # TIME = 80 seconds
 
 #### run parallel ####
 
 # check time for 5 runs parallel - should be faster
 plan(multisession, workers = 5)
 
+
 tic()
-future_pmap(modelInputs[1:5,], 
-            function(slidingWindowType,
-                     biologicalFileNames,
-                     temperatureFileNames,
-                     constants,
-                     inits,
-                     niter,
-                     nburnin,
-                     nchains,
-                     parametersToMonitor,
-                     nthin,
-                     seed){
+testParallel <- future_pmap(modelInputs[1:5,], 
+            safely(function(slidingWindowType,
+                            biologicalFileNames,
+                            temperatureFileNames,
+                            constants,
+                            inits,
+                            niter,
+                            nburnin,
+                            nchains,
+                            parametersToMonitor,
+                            nthin,
+                            seed){
               
               # first read in temperature and biological data
               temperatureData <- readRDS(paste0("./Data/TempData/", 
-                                         temperatureFileNames))    
-       biologicalData <- readRDS(paste0("./Data/BioData/", 
-                                        biologicalFileNames))  
-       
-       # combine the simulated datasets to create dataInput
-       dataInputs <- createDataInput(temperatureData, biologicalData)
-       
-       # run the model and save the output
-       modelResult <- runNimbleModel(slidingWindowType = slidingWindowType,
-                                     dataInput = dataInputs,
-                                     constants = constants,
-                                     inits = inits, 
-                                     niter = niter, 
-                                     nchains = nchains, 
-                                     nburnin = nburnin,
-                                     parametersToMonitor = parametersToMonitor,
-                                     nthin = nthin,
-                                     seed = seed)
-       
-       saveRDS(modelResult, file = paste0("./Data/Checking/Parallel",
-                                          str_sub(biologicalFileNames, 8, -5),
-                                          ".rds"))
+                                                temperatureFileNames))    
+              biologicalData <- readRDS(paste0("./Data/BioData/", 
+                                               biologicalFileNames))  
               
-            }, .options = furrr_options(seed = TRUE))
+              # combine the simulated datasets to create dataInput
+              dataInputs <- createDataInput(temperatureData, biologicalData)
+              
+              
+              # run the model and save the output
+              modelResult <- runNimbleModel(slidingWindowType = slidingWindowType,
+                                            dataInput = dataInputs,
+                                            constants = constants,
+                                            inits = inits, 
+                                            niter = niter, 
+                                            nchains = nchains, 
+                                            nburnin = nburnin,
+                                            parametersToMonitor = parametersToMonitor,
+                                            nthin = nthin,
+                                            seed = seed)
+              
+              saveRDS(modelResult, file = paste0("./Data/Checking/Parallel",
+                                                 str_sub(biologicalFileNames, 8, -5),
+                                                 ".rds"))
+              
+              return(str_sub(biologicalFileNames, 8, -5))
+              
+            }), .options = furrr_options(seed = TRUE))
+toc()
 
-toc() # TIME = 21.32 seconds
 
 
 testManual <- readRDS("./Data/Checking/Manual1.rds")
