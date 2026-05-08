@@ -14,6 +14,7 @@ library(tidyverse)
 library(MCMCvis)
 library(furrr)
 library(tictoc)
+library(purrr)
 
 #### source code ####
 
@@ -114,14 +115,20 @@ bSlopeMarker <- which(modelInputs$biologicalFileNames %in% paste0("bioData",
                 "slope")], ".rds"))
 
 
-# check time for 5 runs parallel - should be faster
-plan(multisession, workers = availableCores() - 20)
+# trying an outer 'map' call to create chunks
+chunks <- split(modelInputs[1:210100,], seq(1, 210100, 100)) # will have 7 left over
 
-tic()
-future_pmap(modelInputs[bNoiseMarker[1],], 
+
+
+map(.x = chunks, ~{
+  
+# setting up parallel running
+plan(multisession, workers = availableCores() - 10, gc = TRUE)
+  
+future_pmap(.x, 
             safely(function(slidingWindowType,
                      biologicalFileNames,
-                     temperatureFileNames,
+                    temperatureFileNames,
                      constants,
                      inits,
                      niter,
@@ -140,20 +147,6 @@ future_pmap(modelInputs[bNoiseMarker[1],],
               # combine the simulated datasets to create dataInput
               dataInputs <- createDataInput(temperatureData, biologicalData)
               
-              #rModel <- nimbleModel(code = slidingWindowModel, 
-              #                      data = dataInputs, 
-              #                      constants = constants, 
-              #                      inits = inits)
-              
-              #cModel <- compileNimble(rModel) 
-              
-              #conf <- configureMCMC(rModel, 
-              #                      monitors = parametersToMonitor) 
-              
-              #rMCMC <- buildMCMC(conf) 
-              
-              #cMCMC <- compileNimble(rMCMC, 
-              #                       project = rModel) 
               
               # run the model and save the output
               modelResult <- runNimbleModel(slidingWindowType = slidingWindowType,
@@ -171,9 +164,22 @@ future_pmap(modelInputs[bNoiseMarker[1],],
                                                  str_sub(biologicalFileNames, 8, -5),
                                                  ".rds"))
               
-              return(str_sub(biologicalFileNames, 8, -5))
+              return(1)
+              
+              rm(modelResult)
+              rm(dataInputs)
+              rm(temperatureData)
+              rm(biologicalData)
+              #
+              gc()
+              
               
             }), .options = furrr_options(seed = TRUE))
-toc()
+
+plan(sequential)
+
+return(1)
+
+})
 
 

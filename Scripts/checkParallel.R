@@ -179,7 +179,7 @@ modelInputs <- data.frame(constants = I(list(constants)),
          nchains = nchains,
          nthin = nthin,
          biologicalFileNames = biologicalFileNames,
-         slidingWindowType = "weighted",)
+         slidingWindowType = "weighted")
 
 plan(sequential)
 

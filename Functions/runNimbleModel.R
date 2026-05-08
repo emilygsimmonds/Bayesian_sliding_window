@@ -12,6 +12,7 @@
 #' parametersToMonitor = list of parameter names to be tracked and reported
 #' nthin = thinning parameter
 #' seed = needs to be length nchains
+#' cMCMC = pass this compiled object to the function
 
 #### Set up ####################################################################
 
@@ -32,7 +33,8 @@ runNimbleModel <- function(slidingWindowType = c("integer",
                         nburnin,
                         parametersToMonitor,
                         nthin,
-                        seed){
+                        seed,
+                        cMCMC){
 
   source("./Functions/nimbleModel.R")
   source("./Functions/nimbleSlidingWindow.R")
@@ -43,24 +45,21 @@ runNimbleModel <- function(slidingWindowType = c("integer",
   
 # then run in Nimble and return the output  
   
-rModel <- nimbleModel(code = slidingWindowModel, 
-                       data = dataInput, 
-                       constants = constants, 
-                       inits = inits)
-  
-cModel <- compileNimble(rModel) 
+ rModel <- nimbleModel(code = slidingWindowModel, 
+                      data = dataInput, 
+                      constants = constants, 
+                      inits = inits)
+ 
+ cModel <- compileNimble(rModel) 
 
-conf <- configureMCMC(rModel, 
-                        monitors = parametersToMonitor) 
-  
-  rMCMC <- buildMCMC(conf) 
-  
-  cMCMC <- compileNimble(rMCMC, 
-                         project = rModel) 
-  
-  #cModel$setData(dataInput)        
-  #cModel$setInits(inits)
-  
+ conf <- configureMCMC(rModel, 
+                       monitors = parametersToMonitor) 
+ 
+ rMCMC <- buildMCMC(conf) 
+ 
+ cMCMC <- compileNimble(rMCMC, 
+                        project = rModel) 
+ 
   modelRun <- runMCMC(cMCMC, 
                       niter = niter, 
                       nburnin = nburnin, 
@@ -68,17 +67,20 @@ conf <- configureMCMC(rModel,
                       nchains = nchains, 
                       setSeed = seed)
   
-  #modelRun <- nimbleMCMC(code = slidingWindowModel, 
-  #                     data = dataInput,
-  #                     constants = constants,
-  #                     inits = inits,
-  #                     monitors = parametersToMonitor,
-  #                     niter = niter,
-  #                     nburnin = nburnin,
-  #                     nchains = nchains,
-  #                     thin = nthin,
-  #                     setSeed = seed)
+  # trying to clear the compiled objects to release memory
 
+ clearCompiled(cMCMC)
+# 
+ clearCompiled(cModel)
+# 
+ rm(dataInput)
+ rm(slidingWindowModel)
+ rm(rModel)
+# 
+ nimbleOptions(clearNimbleFunctionsAfterCompiling = TRUE)
+
+# 
+ gc()
   
   return(modelRun)
   
