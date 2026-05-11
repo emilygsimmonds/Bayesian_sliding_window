@@ -36,15 +36,15 @@ numYears <- 50
 numDays <- 100
 
 # windowOpen from 1 to 50
-windowOpen <- round(seq(1, 50, length.out = 5))
+windowOpen <- round(seq(1, 50, length.out = 3))
 
-# windowDuration from 1-40
-windowDuration <- c(1, 10, 20, 30, 40)
+# windowDuration from 1-30
+windowDuration <- c(1, 15, 30)
 
 # seed from 1:50
 seed <- seq(1, 50, 1)
 
-### Want to run each combination 100 times initially
+### Want to run each combination 50 times initially
 
 # expand a grid to all unique combinations - need to be in same order as in 
 # function to make sure it can be used with pmap
@@ -57,7 +57,7 @@ temperatureInputs <- expand_grid(seed, # open and duration scenarios
                                  numDays,
                                  windowOpen = windowOpen[3],
                                  windowDuration = windowDuration,
-                                 tScenario = "noise") %>% 
+                                 tScenario = "open") %>% 
   bind_rows(expand_grid(seed, # open and duration scenarios
               noise,
               mean,
@@ -67,7 +67,7 @@ temperatureInputs <- expand_grid(seed, # open and duration scenarios
               numDays,
               windowOpen = windowOpen,
               windowDuration = windowDuration[3],
-              tScenario = "noise")) %>%# label the scenarios 
+              tScenario = "duration")) %>%# label the scenarios 
   rowid_to_column("marker")
 
 #### Create temperature data ###################################################
@@ -100,12 +100,15 @@ write.csv(temperatureInputs, file = "./Data/TemperatureInputs1.csv")
 # biological data also want to add in an extra axes of noise and slope variation
 # window open and close remain the same as the simulated data
 
+temperatureInputs <- read.csv("./Data/TemperatureInputs1.csv")
+
 # take the temperature inputs dataframe and reduce to columns I need
 biologicalInputsA <- temperatureInputs %>% select(windowOpen, windowDuration)
 
 # now try and expand to include the actual temperature data - now need as a file
 # name rather than the actual data
 tempDataNames <- list.files("./Data/TempData/", pattern = "rds")
+
 
 biologicalInputsB <- biologicalInputsA %>%
   mutate(tempDataNames = tempDataNames) 
@@ -114,7 +117,7 @@ biologicalInputsB <- biologicalInputsA %>%
 bioNoise <- c(2.5, 5, 10)
 
 # slope of temperature biology relationship 0 to 10
-slope <- seq(-6, 6, by = 2)
+slope <- seq(-6, 6, by = 3)
 
 # intercept fixed at 20
 intercept <- 20
@@ -166,7 +169,7 @@ simulatedBioData <- future_pmap(select(biologicalInputs, -bScenario),
                            
                            # then create the bioData
                            results <- simulateBioData(seed = seed,
-                                              bioNoise = noise,
+                                              bioNoise = bioNoise,
                                               slope = slope,
                                               intercept = intercept,
                                               tempData = tempData,
@@ -178,14 +181,24 @@ simulatedBioData <- future_pmap(select(biologicalInputs, -bScenario),
                          }, .options = furrr_options(seed = TRUE))
 
 # check three of them
-test1 <- readRDS("./Data/TempData/TempData1.rds")
+test0 <- readRDS("./Data/TempData/TempData1.rds")
+test01 <- readRDS("./Data/TempData/TempData151.rds")
 test1 <- readRDS("./Data/BioData/bioData1.rds")
 test2 <- readRDS("./Data/BioData/bioData2.rds")
-test50 <- readRDS("./Data/BioData/bioData250000.rds")
+test50 <- readRDS("./Data/BioData/bioData100000.rds")
 
 test1
 test2
 test50 # all different! That's what I wanted
+
+rowSums(test0)-
+rowSums(test01)
+
+test02 <- readRDS("./Data/TempData/TempData50.rds")
+test03 <- readRDS("./Data/TempData/TempData100.rds")
+
+rowSums(test02)-
+rowSums(test03)
 
 # need to remove tempData column from the inputs to save
 write.csv(biologicalInputs, file = "./Data/BiologicalInputs1.csv") 
