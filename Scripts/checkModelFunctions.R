@@ -136,6 +136,22 @@ parametersToMonitor = c("open",
 
 # run defineNimbleModel function with integer selected
 
+constants <- list(numYears = 50,
+                   windowStarts = c(1,50),
+                   windowDurations = c(1,49))
+
+set.seed(2026)
+# sum of open and duration must be < numDays
+inits <- list(open = round(runif(1,
+                                 constants$windowStarts[1], 
+                                 constants$windowStarts[2])),
+              duration = round(runif(1, 
+                                     constants$windowDurations[1], 
+                                     constants$windowDurations[2])), 
+              intercept = rnorm(1, 0, sd = 100),
+              slope = rnorm(1, 0, sd = 10),
+              error = rgamma(1, 2, 1))
+
 slidingWindowModel <- defineNimbleModel(slidingWindowType = "integer")
 
 # manual running straight from Nimble

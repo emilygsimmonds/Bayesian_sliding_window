@@ -20,6 +20,7 @@
 
 library(nimble)
 library(MCMCvis)
+library(coda)
 
 #### function code ####
 
@@ -45,19 +46,19 @@ runNimbleModel <- function(slidingWindowType = c("integer",
   
 # then run in Nimble and return the output  
   
- rModel <- nimbleModel(code = slidingWindowModel, 
+  rModel <- nimbleModel(code = slidingWindowModel, 
                       data = dataInput, 
                       constants = constants, 
                       inits = inits)
  
- cModel <- compileNimble(rModel) 
+  cModel <- compileNimble(rModel) 
 
- conf <- configureMCMC(rModel, 
+  conf <- configureMCMC(rModel, 
                        monitors = parametersToMonitor) 
  
- rMCMC <- buildMCMC(conf) 
+  rMCMC <- buildMCMC(conf) 
  
- cMCMC <- compileNimble(rMCMC, 
+  cMCMC <- compileNimble(rMCMC, 
                         project = rModel) 
  
   modelRun <- runMCMC(cMCMC, 
@@ -70,18 +71,31 @@ runNimbleModel <- function(slidingWindowType = c("integer",
   # trying to clear the compiled objects to release memory
 
  clearCompiled(cMCMC)
-# 
  clearCompiled(cModel)
-# 
+ 
  rm(dataInput)
  rm(slidingWindowModel)
  rm(rModel)
-# 
+
  nimbleOptions(clearNimbleFunctionsAfterCompiling = TRUE)
 
-# 
  gc()
-  
-  return(modelRun)
+ 
+ # make a summary object to return to reduce memory load
+ 
+ summaryModel <- MCMCsummary(modelRun)
+ 
+ # then calculate geweke score for each chain and add
+ 
+ for(i in 1:nchains){
+ 
+ summaryModel[7+i] <- geweke.diag(coda::as.mcmc(modelRun[[i]], 
+                                                       thin = nthin))$z
+ colnames(summaryModel)[7+i] <- paste0("gewekeChain", i) 
+ }
+ 
+ 
+ 
+ return(summaryModel)
   
 }

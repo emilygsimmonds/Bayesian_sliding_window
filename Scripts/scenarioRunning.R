@@ -15,6 +15,7 @@ library(MCMCvis)
 library(furrr)
 library(tictoc)
 library(purrr)
+library(coda)
 
 #### source code ####
 
