@@ -39,20 +39,20 @@ biologicalFileNames <- paste0("bioData",
                               biologicalInputs$bioMarker,
                               ".rds")
 
-# remove lines that have already run
-removalNumbers <- parse_number(list.files("./Data/ModelResults/"), na = ".")
-# then match these to the number in the biologicalInputs dataframe
-removalMarker <- which(biologicalInputs$bioMarker %in% removalNumbers)
-
-# remove those entries from both sets of filenames
-biologicalFileNames <- biologicalFileNames[-removalMarker]
-temperatureFileNames <- temperatureFileNames[-removalMarker]
+## remove lines that have already run
+#removalNumbers <- parse_number(list.files("./Data/ModelResults/"), na = ".")
+## then match these to the number in the biologicalInputs dataframe
+#removalMarker <- which(biologicalInputs$bioMarker %in% removalNumbers)
+#
+## remove those entries from both sets of filenames
+#biologicalFileNames <- biologicalFileNames[-removalMarker]
+#temperatureFileNames <- temperatureFileNames[-removalMarker]
 
 #### Parallel set up ###########################################################
 
 # run defineNimbleModel function with integer selected
 
-slidingWindowModel <- defineNimbleModel(slidingWindowType = "integer")
+slidingWindowModel <- defineNimbleModel(slidingWindowType = "weighted")
 
 ## need to create an input dataframe which will feed in all necessary parameters
 # to the model run: parameters need to be in the following order -
@@ -107,19 +107,17 @@ modelInputs <- data.frame(constants = I(list(constants)),
 
 # create batches to run using markers
 
-bNoiseMarker <- which(modelInputs$biologicalFileNames %in% paste0("bioData",
-  biologicalInputs$bioMarker[which(biologicalInputs$bScenario == 
-                                                   "bnoise")], ".rds"))
-
-bSlopeMarker <- which(modelInputs$biologicalFileNames %in% paste0("bioData",
-                biologicalInputs$bioMarker[which(biologicalInputs$bScenario == 
-                "slope")], ".rds"))
+#bNoiseMarker <- which(modelInputs$biologicalFileNames %in% paste0("bioData",
+#  biologicalInputs$bioMarker[which(biologicalInputs$bScenario == 
+#                                                   "bnoise")], ".rds"))
+#
+#bSlopeMarker <- which(modelInputs$biologicalFileNames %in% paste0("bioData",
+#                biologicalInputs$bioMarker[which(biologicalInputs$bScenario == 
+#                "slope")], ".rds"))
 
 
 # trying an outer 'map' call to create chunks
-chunks <- split(modelInputs[1:210100,], seq(1, 210100, 100)) # will have 7 left over
-
-
+chunks <- split(modelInputs[1:120000,], seq(1, 120000, 100))
 
 map(.x = chunks, ~{
   

@@ -34,8 +34,7 @@ runNimbleModel <- function(slidingWindowType = c("integer",
                         nburnin,
                         parametersToMonitor,
                         nthin,
-                        seed,
-                        cMCMC){
+                        seed){
 
   source("./Functions/nimbleModel.R")
   source("./Functions/nimbleSlidingWindow.R")
@@ -69,9 +68,6 @@ runNimbleModel <- function(slidingWindowType = c("integer",
                       setSeed = seed)
   
   # trying to clear the compiled objects to release memory
-
- clearCompiled(cMCMC)
- clearCompiled(cModel)
  
  rm(dataInput)
  rm(slidingWindowModel)

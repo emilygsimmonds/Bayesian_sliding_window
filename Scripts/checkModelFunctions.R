@@ -125,7 +125,6 @@ constants <- list(numYears = 100,
 set.seed(2026)
 # sum of open and duration must be < numDays
 
-
 parametersToMonitor = c("open",
              "duration", 
              "intercept",
@@ -216,10 +215,11 @@ testModel4 <- runNimbleModel(slidingWindowType = "integer",
                           nchains = nchains, 
                           nburnin = nburnin,
                           parametersToMonitor = parametersToMonitor,
-                          nthin = nthin) # RUNS AT LEAST 19.02.2026
+                          nthin = nthin,
+                          seed = c(2026, 2026)) # RUNS AT LEAST 19.02.2026
 
 MCMCsummary(testModel1)
-MCMCsummary(testModel4) 
+testModel4
 
 ### Test 2: does it give same answer as nimbleModel: weighted? ####
 
@@ -235,7 +235,8 @@ testModel5 <- runNimbleModel(slidingWindowType = "weighted",
                           nchains = nchains, 
                           nburnin = nburnin,
                           parametersToMonitor = parametersToMonitor,
-                          nthin = nthin) # RUNS AT LEAST 19.02.2026
+                          nthin = nthin,
+                          seed = c(2026, 2026)) # RUNS AT LEAST 19.02.2026
 
 MCMCsummary(testModel3) 
-MCMCsummary(testModel5) # CHECK PASSED INC with SEED
+testModel5 # CHECK PASSED INC with SEED
