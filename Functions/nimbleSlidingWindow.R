@@ -22,10 +22,10 @@ library(nimble)
 # using integer indices - so only whole days of temperature
 nimbleSlidingWindow <- nimbleFunction(
   run = function(open = double(0), 
-                 duration = double(0),
+                 close = double(0),
                  temperature = double(1)) { # type declarations 1 = vector
     
-    return(mean(temperature[trunc(open):ceiling(open+duration)]))
+    return(mean(temperature[trunc(close):ceiling(open)]))
     
     returnType(double(0))  # return type declaration
   } )

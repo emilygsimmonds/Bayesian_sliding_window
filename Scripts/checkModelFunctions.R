@@ -37,9 +37,9 @@ temperatureVariable <- map2(x, y, ~ {
   # simulate the temperature for the key window and pre and post period
   keyWindow <- rnorm(2, mean = .y,
                      sd = 2)
-  preWindow <- rnorm(19, mean = 5,
+  preWindow <- rnorm(79, mean = 5,
                      sd = 2)
-  postWindow <- rnorm(79, mean = 5, 
+  postWindow <- rnorm(19, mean = 5, 
                       sd = 2)
   
   # then combine into an annual time series
@@ -75,17 +75,17 @@ ggplot(data = filter(plottingTemperature,
 temperatureVariableDF <- bind_cols(temperatureVariable)
 
 # take the annual means of the key temperature window
-temperatureMeansDF <- as.data.frame(colMeans(temperatureVariableDF[20:21,]))
+temperatureMeansDF <- as.data.frame(colMeans(temperatureVariableDF[80:81,]))
 colnames(temperatureMeansDF) <- c("meanTemperature")
 
 # create a biological variable that responds to part of the temperature series
 # intercept of 30, slope = 5
 
 set.seed(2026)
-biologicalVariable <- rnorm(100, 
+biologicalVariable <- round(rnorm(100, 
                             mean = 30 + 
                                       (temperatureMeansDF$meanTemperature*5),
-                            sd = 5)
+                            sd = 5))
 
 
 # plot the relationship between the temperature and the biological variable
@@ -119,7 +119,8 @@ dataInput <- list(temperature = temperatureVariableDF,
                   biologicalVariable = biologicalVariable - mean(biologicalVariable))
 
 constants <- list(numYears = 100,
-                  windowStarts = c(1,50),
+                  refDay = 100,
+                  windowLags = c(50,1),
                   windowDurations = c(1,49))
 
 set.seed(2026)
@@ -135,15 +136,16 @@ parametersToMonitor = c("open",
 
 # run defineNimbleModel function with integer selected
 
-constants <- list(numYears = 50,
-                   windowStarts = c(1,50),
-                   windowDurations = c(1,49))
+constants <- list(numYears = 100,
+                  refDay = 100,
+                  windowLags = c(50,1),
+                  windowDurations = c(1,49))
 
 set.seed(2026)
 # sum of open and duration must be < numDays
 inits <- list(open = round(runif(1,
-                                 constants$windowStarts[1], 
-                                 constants$windowStarts[2])),
+                                 constants$refDay - constants$windowLags[1], 
+                                 constants$refDay - constants$windowLags[2])),
               duration = round(runif(1, 
                                      constants$windowDurations[1], 
                                      constants$windowDurations[2])), 
@@ -165,15 +167,15 @@ testModel1 <- nimbleMCMC(code = slidingWindowModel,
                          monitors = parametersToMonitor,
                          thin = nthin) # RUNS AT LEAST 19.02.2026
 
+MCMCsummary(testModel1) # SLOPE IS OVER ESTIMATED HERE BUT OPEN + DURATION 
+# ARE BANG ON
+
 centredVariables <- temperatureMeansDFcombined %>%
   mutate(centredBV = biologicalVariable - mean(biologicalVariable),
          centredT = meanTemperature - mean(meanTemperature))
 
 testModel2 <- lm(centredBV ~ centredT, 
                     data = centredVariables)
-
-MCMCsummary(testModel1) # SLOPE IS OVER ESTIMATED HERE BUT OPEN + DURATION 
-# ARE BANG ON
 
 summary(testModel2) # PRETTY MUCH EXACTLY RIGHT
 
