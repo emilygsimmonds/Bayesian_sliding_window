@@ -181,4 +181,139 @@ return(1)
 
 })
 
+#### Real temperature ##########################################################
+
+# pull a list of file names of biological data and the temperature data
+temperatureFileNames <- read.csv("./Data/BiologicalInputsReal.csv") %>%
+  select(tempDataNames) %>%
+  unlist(recursive = FALSE) %>%
+  as.vector()
+
+# biological inputs
+biologicalInputs <- read.csv("./Data/BiologicalInputsReal.csv") 
+
+biologicalFileNames <- paste0("bioData", 
+                              biologicalInputs$bioMarker,
+                              ".rds")
+
+
+#### Parallel set up ###########################################################
+
+# run defineNimbleModel function with integer selected
+
+slidingWindowModel <- defineNimbleModel(slidingWindowType = "weighted")
+
+## need to create an input dataframe which will feed in all necessary parameters
+# to the model run: parameters need to be in the following order -
+# slidingWindowType, dataInput, constants, inits, niter, nburnin, 
+# nchains, parametersToMonitor, nthin, seed
+
+niter <- 500000
+nburnin <- 50000
+nchains <- 2
+nthin <- 10
+seed <- 1:nchains
+
+constants <- list(numYears = 50,
+                  windowStarts = c(1,50),
+                  windowDurations = c(1,49))
+
+set.seed(2026)
+# sum of open and duration must be < numDays
+inits <- list(open = round(runif(1,
+                                 constants$windowStarts[1], 
+                                 constants$windowStarts[2])),
+              duration = round(runif(1, 
+                                     constants$windowDurations[1], 
+                                     constants$windowDurations[2])), 
+              intercept = rnorm(1, 0, sd = 100),
+              slope = rnorm(1, 0, sd = 10),
+              error = rgamma(1, 2, 1))
+
+parametersToMonitor = c("open",
+                        "duration", 
+                        "intercept",
+                        "slope",
+                        "error")
+
+
+modelInputs <- data.frame(constants = I(list(constants)),
+                          inits = I(list(inits)),
+                          parametersToMonitor = I(list(parametersToMonitor)),
+                          seed = I(list(seed))) %>%
+  .[rep(1, length(temperatureFileNames)),] %>%
+  mutate(temperatureFileNames = temperatureFileNames,
+         niter = niter,
+         nburnin = nburnin,
+         nchains = nchains,
+         nthin = nthin,
+         biologicalFileNames = biologicalFileNames,
+         slidingWindowType = "weighted",)
+
+#### Parallel running ##########################################################
+
+# trying an outer 'map' call to create chunks
+chunks <- split(modelInputs[1:70000,], seq(1, 70000, 100))
+
+map(.x = chunks, ~{
+  
+  # setting up parallel running
+  plan(multisession, workers = availableCores() - 10, gc = TRUE)
+  
+  future_pmap(.x, 
+              safely(function(slidingWindowType,
+                              biologicalFileNames,
+                              temperatureFileNames,
+                              constants,
+                              inits,
+                              niter,
+                              nburnin,
+                              nchains,
+                              parametersToMonitor,
+                              nthin,
+                              seed){
+                
+                # first read in temperature and biological data
+                temperatureData <- readRDS(paste0("./Data/TempDataReal/Editted/", 
+                                                  temperatureFileNames))    
+                biologicalData <- readRDS(paste0("./Data/BioData2/", 
+                                                 biologicalFileNames))  
+                
+                # combine the simulated datasets to create dataInput
+                dataInputs <- createDataInput(temperatureData, biologicalData)
+                
+                
+                # run the model and save the output
+                modelResult <- runNimbleModel(slidingWindowType = slidingWindowType,
+                                              dataInput = dataInputs,
+                                              constants = constants,
+                                              inits = inits, 
+                                              niter = niter, 
+                                              nchains = nchains, 
+                                              nburnin = nburnin,
+                                              parametersToMonitor = parametersToMonitor,
+                                              nthin = nthin,
+                                              seed = seed)
+                
+                saveRDS(modelResult, file = paste0("./Data/ModelResults2/ModelResult",
+                                                   str_sub(biologicalFileNames, 8, -5),
+                                                   ".rds"))
+                
+                return(1)
+                
+                rm(modelResult)
+                rm(dataInputs)
+                rm(temperatureData)
+                rm(biologicalData)
+                #
+                gc()
+                
+                
+              }), .options = furrr_options(seed = TRUE))
+  
+  plan(sequential)
+  
+  return(1)
+  
+})
 

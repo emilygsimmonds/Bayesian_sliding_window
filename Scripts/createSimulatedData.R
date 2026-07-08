@@ -191,14 +191,128 @@ test1
 test2
 test50 # all different! That's what I wanted
 
-rowSums(test0)-
-rowSums(test01)
-
-test02 <- readRDS("./Data/TempData/TempData50.rds")
-test03 <- readRDS("./Data/TempData/TempData100.rds")
-
-rowSums(test02)-
-rowSums(test03)
 
 # need to remove tempData column from the inputs to save
 write.csv(biologicalInputs, file = "./Data/BiologicalInputs1.csv") 
+
+#### REAL TEMPERATURE ##########################################################
+#### Inputs for biological data (REAL) #########################################
+
+# Using the same process as for the simulated data but this time for the real
+# temperature data
+
+tempDataNames <- list.files("./Data/TempDataReal/Editted/", pattern = "rds")
+
+# now need to set up all of the simulation parameters including open and close 
+
+# noise in relationship between temp and biology 1 to 10
+bioNoise <- c(2.5, 5, 10)
+
+# slope of temperature biology relationship 0 to 10
+slope <- seq(-6, 6, by = 3)
+
+# intercept fixed at 20
+intercept <- 20
+
+# seed from 1:50
+seed <- seq(1, 50, 1)
+
+# windowOpen from 1 to 50
+windowOpen <- round(seq(1, 50, length.out = 3))
+
+# windowDuration from 1-30
+windowDuration <- c(1, 15, 30)
+
+# now expand grid to include the extra axes
+
+biologicalInputsReal <- data.frame(tempDataNames = 
+                                     tempDataNames)
+
+biologicalInputsRealB <- expand_grid(biologicalInputsReal, 
+                                 bioNoise, # bnoise scenario
+                                 slope = slope[5], 
+                                 intercept, 
+                                 seed,
+                                 windowOpen = windowOpen[2],
+                                 windowDuration = windowDuration[2],
+                                 bScenario = "bnoise") %>%
+  bind_rows(expand_grid(biologicalInputsReal, 
+                        bioNoise = bioNoise[2], 
+                        slope, # bslope scenario
+                        intercept, 
+                        seed,
+                        windowOpen = windowOpen[2],
+                        windowDuration = windowDuration[2],
+                        bScenario = "slope")) %>%
+  bind_rows(expand_grid(biologicalInputsReal, 
+                        bioNoise = bioNoise[2], 
+                        slope = slope[5], 
+                        intercept, 
+                        seed,
+                        windowOpen,
+                        windowDuration = windowDuration[2],
+                        bScenario = "open")) %>%
+  bind_rows(expand_grid(biologicalInputsReal, 
+                        bioNoise = bioNoise[2], 
+                        slope = slope[5], 
+                        intercept, 
+                        seed,
+                        windowOpen = windowOpen[2],
+                        windowDuration,
+                        bScenario = "slope"))
+
+### reorder column names to be in order expected by pmap
+
+biologicalInputsRealB <- biologicalInputsRealB %>%
+  select(seed, 
+         bioNoise, 
+         slope, 
+         intercept, 
+         tempDataNames, 
+         windowOpen, 
+         windowDuration,
+         bScenario) %>%
+  rowid_to_column("bioMarker")
+
+#### Create biological data ####################################################
+
+plan(multisession, workers = 3)
+
+simulatedBioData <- future_pmap(select(biologicalInputsRealB, -bScenario),
+                                function(bioMarker, seed, bioNoise, 
+                                         slope, intercept,
+                                         tempDataNames, windowOpen, 
+                                         windowDuration){
+                                  
+                                  # first import the temperature data
+                                  tempData <- readRDS(paste0("./Data/TempDataReal/Editted/", 
+                                                             tempDataNames))
+                                  
+                                  # then create the bioData
+                                  results <- simulateBioData(seed = seed,
+                                                             bioNoise = bioNoise,
+                                                             slope = slope,
+                                                             intercept = intercept,
+                                                             tempData = tempData,
+                                                             windowOpen = windowOpen,
+                                                             windowDuration = windowDuration)
+                                  saveRDS(results, paste0("./Data/BioData2/bioData", 
+                                                          bioMarker,
+                                                          ".rds"))  
+                                }, .options = furrr_options(seed = TRUE))
+
+# check three of them
+test1 <- readRDS("./Data/BioData2/bioData1.rds")
+test2 <- readRDS("./Data/BioData2/bioData2.rds")
+test50 <- readRDS("./Data/BioData2/bioData1000.rds")
+
+test1
+test2
+test50 # all different! That's what I wanted
+
+
+# need to remove tempData column from the inputs to save
+write.csv(biologicalInputsRealB, file = "./Data/BiologicalInputsReal.csv") 
+
+
+

@@ -10,7 +10,7 @@
 #' - key variable = name of key variable to extract as written in net cdf
 #' 
 #' Outputs:
-#' - dataframe of year, yDay, keyVariable, longitude, latitude
+#' - dataframe of year, fulldate, yDay, keyVariable, longitude, latitude
 
 #### Set up ####################################################################
 
@@ -60,8 +60,11 @@ editMetOfficeData <- function(folderPath,
            year = substr(filename, 29, 32),
            yDay = yday(ymd(substr(filename, 29, 36)))+(day-1)) %>%
     # finally, remove columns I don't need and reorder
-    select(c("year", "yDay","keyVariable", "latitude", "longitude")) %>%
-    filter(longitude == longitudes)
+    select(c("fullDate", "year", "yDay","keyVariable", "latitude", "longitude")) %>%
+    drop_na()
+  
+  gc()
+  rm(ncData)
   
   return(fullMelted)
   
