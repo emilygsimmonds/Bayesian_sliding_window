@@ -165,7 +165,8 @@ testModel1 <- nimbleMCMC(code = slidingWindowModel,
                          nburnin = nburnin,
                          nchains = nchains, 
                          monitors = parametersToMonitor,
-                         thin = nthin) # RUNS AT LEAST 19.02.2026
+                         thin = nthin,
+                         setSeed = c(2026, 2026)) # RUNS AT LEAST 19.02.2026
 
 MCMCsummary(testModel1) # SLOPE IS OVER ESTIMATED HERE BUT OPEN + DURATION 
 # ARE BANG ON
@@ -195,7 +196,8 @@ testModel3 <- nimbleMCMC(code = slidingWindowModel,
                          nburnin = nburnin,
                          nchains = nchains, 
                          monitors = parametersToMonitor,
-                         thin = nthin) # RUNS AT LEAST 19.02.2026
+                         thin = nthin,
+                         setSeed = c(2026, 2026)) # RUNS AT LEAST 19.02.2026
 
 
 MCMCsummary(testModel3) # THIS ONE IS MUCH BETTER! EVERYTHING BANG ON. 
@@ -221,7 +223,7 @@ testModel4 <- runNimbleModel(slidingWindowType = "integer",
                           seed = c(2026, 2026)) # RUNS AT LEAST 19.02.2026
 
 MCMCsummary(testModel1)
-testModel4
+testModel4 # seed not pulling through 08.07.26
 
 ### Test 2: does it give same answer as nimbleModel: weighted? ####
 
@@ -241,4 +243,4 @@ testModel5 <- runNimbleModel(slidingWindowType = "weighted",
                           seed = c(2026, 2026)) # RUNS AT LEAST 19.02.2026
 
 MCMCsummary(testModel3) 
-testModel5 # CHECK PASSED INC with SEED
+testModel5 # seed not pulling through 08.07.26
