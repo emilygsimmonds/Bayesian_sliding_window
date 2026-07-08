@@ -107,15 +107,6 @@ modelInputs <- data.frame(constants = I(list(constants)),
 
 # create batches to run using markers
 
-#bNoiseMarker <- which(modelInputs$biologicalFileNames %in% paste0("bioData",
-#  biologicalInputs$bioMarker[which(biologicalInputs$bScenario == 
-#                                                   "bnoise")], ".rds"))
-#
-#bSlopeMarker <- which(modelInputs$biologicalFileNames %in% paste0("bioData",
-#                biologicalInputs$bioMarker[which(biologicalInputs$bScenario == 
-#                "slope")], ".rds"))
-
-
 # trying an outer 'map' call to create chunks
 chunks <- split(modelInputs[1:120000,], seq(1, 120000, 100))
 

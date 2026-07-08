@@ -54,14 +54,15 @@ nthin <- 5
 seed <- 1:nchains
 
 constants <- list(numYears = 50,
-                  windowStarts = c(1,50),
+                  refDay = 100,
+                  windowLags = c(50,1),
                   windowDurations = c(1,49))
 
 set.seed(2026)
 # sum of open and duration must be < numDays
 inits <- list(open = round(runif(1,
-                                 constants$windowStarts[1], 
-                                 constants$windowStarts[2])),
+                                 constants$refDay - constants$windowLags[2], 
+                                 constants$refDay - constants$windowLags[1])),
               duration = round(runif(1, 
                                      constants$windowDurations[1], 
                                      constants$windowDurations[2])), 
@@ -104,7 +105,7 @@ biologicalDataTest <- readRDS(paste0("./Data/BioData/",
                                  modelInputs$biologicalFileNames[1]))  
 
 # combine the simulated datasets to create dataInput
-dataInputs <- createDataInput(temperatureDataTest, biologicalDataTest)
+dataInputs <- createDataInput(temperatureDataTest, round(biologicalDataTest))
 
 test1Manual <- runNimbleModel(slidingWindowType = "weighted",
                               dataInput = dataInputs,
@@ -117,6 +118,8 @@ test1Manual <- runNimbleModel(slidingWindowType = "weighted",
                               nthin = modelInputs[1,]$nthin,
                               seed = modelInputs[1,]$seed[[1]])
 
+test1Manual
+
 # save out
 saveRDS(test1Manual, file = "./Data/Checking/Manual1.rds")
 
@@ -126,34 +129,27 @@ rm(list = ls())
 
 #### Run sequential ####
 
-# re-run inputs: REMEMBER TO RE-RUN 'SET UP'
-
-# run defineNimbleModel function with integer selected
-
-slidingWindowModel <- defineNimbleModel(slidingWindowType = "integer")
-
 ## need to create an input dataframe which will feed in all necessary parameters
 # to the model run: parameters need to be in the following order -
 # slidingWindowType, dataInput, constants, inits, niter, nburnin, 
 # nchains, parametersToMonitor, nthin, seed
 
-
-niter <- 500000
-nburnin <- 50000
+niter <- 50000
+nburnin <- 5000
 nchains <- 2
-nthin <- 10
+nthin <- 5
 seed <- 1:nchains
 
-
 constants <- list(numYears = 50,
-                  windowStarts = c(1,50),
+                  refDay = 100,
+                  windowLags = c(50,1),
                   windowDurations = c(1,49))
 
 set.seed(2026)
 # sum of open and duration must be < numDays
 inits <- list(open = round(runif(1,
-                                 constants$windowStarts[1], 
-                                 constants$windowStarts[2])),
+                                 constants$refDay - constants$windowLags[1], 
+                                 constants$refDay - constants$windowLags[2])),
               duration = round(runif(1, 
                                      constants$windowDurations[1], 
                                      constants$windowDurations[2])), 
@@ -204,7 +200,8 @@ testSequential <- future_pmap(modelInputs[1:5,],
                                                                  biologicalFileNames))  
                                 
                                 # combine the simulated datasets to create dataInput
-                                dataInputs <- createDataInput(temperatureData, biologicalData)
+                                dataInputs <- createDataInput(temperatureData, 
+                                                              round(biologicalData))
                                 
                                 # run the model and save the output
                                 modelResult <- runNimbleModel(slidingWindowType = slidingWindowType,
@@ -287,9 +284,9 @@ testSequential <- readRDS("./Data/Checking/Sequential1.rds")
 
 testParallel <- readRDS("./Data/Checking/Parallel1.rds")
 
-MCMCsummary(testManual)
-MCMCsummary(testSequential)
-MCMCsummary(testParallel)
+testManual
+testSequential
+testParallel
 
 # seed is working the same in the parallel but not matching the manual
 # Results are VERY SIMILAR though
