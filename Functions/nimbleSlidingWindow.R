@@ -35,17 +35,19 @@ nimbleSlidingWindow <- nimbleFunction(
 # weighting the first and last day in the window so it can include partial days
 nimbleWeightedSlidingWindow <- nimbleFunction(
   run = function(open = double(0), 
-                 duration = double(0),
+                 close = double(0),
                  temperature = double(1)) { # type declarations 1 = vector
     # set weight outside of function - first all to 1
-    weight <- rep(1, length(trunc(open):ceiling(open+duration))) 
+    weight <- rep(1, length(trunc(close):ceiling(open))) 
     # overwrite first and last entry to lower than 1
-    weight[1] <- 1-(open-trunc(open))
+    weight[1] <- 1-(close-trunc(close)) # this should be what is left over of the start
+    # if close is whole, then the whole weight is taken
     # need an if clause to deal with integers - only overwrite final weight if
-    # the sum of open and duration is not an integer
-    if((open+duration) - trunc(open+duration) != 0){
-    weight[length(weight)] <- (open+duration) - trunc(open+duration)}
-    windowMean <- weightedMeanNimble(values = c(temperature[trunc(open):ceiling(open+duration)]),
+    # open is not integer
+    if(open - trunc(open) != 0){
+    weight[length(weight)] <- open - trunc(open) # gives weight of the 'overhang'
+    }
+    windowMean <- weightedMeanNimble(values = c(temperature[trunc(close):ceiling(open)]),
                                      weights = weight) # works
     return(windowMean)
     returnType(double(0))  # return type declaration

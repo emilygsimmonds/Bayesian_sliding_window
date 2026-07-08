@@ -70,8 +70,10 @@ slidingWindowModel <- nimbleCode({
 #-------------------------------------------------------------------------------
 ## DEFINE PRIORS
 
+windowStarts[1:2] <- refDay - windowLags[1:2]
 open ~ dunif(windowStarts[1], windowStarts[2]-1) 
 duration ~ dunif(windowDurations[1], windowDurations[2])
+windowClose <- open - duration
 intercept ~ dnorm(0, sd = 100)
 slope ~ dnorm(0, sd = 10)
 error ~ dgamma(2, 1)
@@ -82,7 +84,7 @@ error ~ dgamma(2, 1)
 for(i in 1:numYears){
  
  temperatureWindow[i] <- nimbleWeightedSlidingWindow(open,
-                                             duration,
+                                             windowClose,
                                              temperature[,i])
 } # keep the loop just for temperature
 
