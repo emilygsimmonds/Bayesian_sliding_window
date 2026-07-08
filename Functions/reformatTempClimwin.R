@@ -27,7 +27,7 @@ reformatTempClimwin <- function(folderPath,
   # first, import the real temperature data in previous format
   temperatureFile <- readRDS(paste0(folderPath, filename)) %>%
   # now need to alter the format to get a Date column in dd/mm/yyyy
-    mutate(Date_ymd = ymd(temperatureFile$fullDate)) %>%
+    mutate(Date_ymd = ymd(fullDate)) %>%
     mutate(Date = format(Date_ymd, "%d/%m/%Y")) %>%
     select(Date, keyVariable)
   
