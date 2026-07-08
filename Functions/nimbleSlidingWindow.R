@@ -25,7 +25,7 @@ nimbleSlidingWindow <- nimbleFunction(
                  duration = double(0),
                  temperature = double(1)) { # type declarations 1 = vector
     
-    return(mean(temperature[trunc(open):floor(open-duration)]))
+    return(mean(temperature[trunc(open):ceiling(open+duration)]))
     
     returnType(double(0))  # return type declaration
   } )
@@ -38,14 +38,14 @@ nimbleWeightedSlidingWindow <- nimbleFunction(
                  duration = double(0),
                  temperature = double(1)) { # type declarations 1 = vector
     # set weight outside of function - first all to 1
-    weight <- rep(1, length(trunc(open):floor(open-duration))) 
+    weight <- rep(1, length(trunc(open):ceiling(open+duration))) 
     # overwrite first and last entry to lower than 1
     weight[1] <- 1-(open-trunc(open))
     # need an if clause to deal with integers - only overwrite final weight if
     # the sum of open and duration is not an integer
-    if((open-duration) - trunc(open-duration) != 0){
-    weight[length(weight)] <- (open-duration) - trunc(open-duration)}
-    windowMean <- weightedMeanNimble(values = c(temperature[trunc(open):floor(open-duration)]),
+    if((open+duration) - trunc(open+duration) != 0){
+    weight[length(weight)] <- (open+duration) - trunc(open+duration)}
+    windowMean <- weightedMeanNimble(values = c(temperature[trunc(open):ceiling(open+duration)]),
                                      weights = weight) # works
     return(windowMean)
     returnType(double(0))  # return type declaration
