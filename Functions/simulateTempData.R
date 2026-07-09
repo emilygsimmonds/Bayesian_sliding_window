@@ -13,6 +13,7 @@
 #' - noiseSignal = standard deviation of the 'window'
 #' - numYears = number of years to simulate for
 #' - numDays = number of days to simulate for
+#' - refDay = day to calculate window "back from"
 #' - windowOpen = index on when to open the window
 #' - windowDuration = index on how long to open the window
 #' 
@@ -35,6 +36,7 @@ simulateTempData <- function(seed,
                              noiseSignal,
                              numYears,
                              numDays,
+                             refDay,
                              windowOpen,
                              windowDuration){
   
@@ -46,17 +48,19 @@ yearEffect <- as.list(rnorm(numYears,
                             mean = meanSignal, 
                             sd = meanSignal/5))
 
+windowStart <- refDay - windowOpen
+
 # need to ensure a different seed for each year
 temperatureVariable <- map2(.x = years, .y = yearEffect, function(.x, .y){
   set.seed(.x)
-  keyWindow <- rnorm(windowDuration, mean = .y,
-                     sd = noiseSignal)
-  set.seed(.x)
-  preWindow <- rnorm(windowOpen-1, 
+  preWindow <- rnorm(length(1:(windowStart-windowDuration-1)), # sample temperatures in pre-window part
                      mean = mean,
                      sd = noise)
   set.seed(.x)
-  postWindow <- rnorm((numDays-(windowOpen+windowDuration-1)), 
+  keyWindow <- rnorm(length((windowStart-windowDuration):windowStart), mean = .y,
+                     sd = noiseSignal)
+  set.seed(.x)
+  postWindow <- rnorm((numDays-(windowStart)), 
                       mean = mean, 
                       sd = noise)
   yearTemperature <- data.frame(year = c(preWindow,
