@@ -44,6 +44,9 @@ windowDuration <- c(1, 15, 30)
 # seed from 1:50
 seed <- seq(1, 50, 1)
 
+# refDay always 100
+refDay = 100
+
 ### Want to run each combination 50 times initially
 
 # expand a grid to all unique combinations - need to be in same order as in 
@@ -55,6 +58,7 @@ temperatureInputs <- expand_grid(seed, # open and duration scenarios
                                  noiseSignal,
                                  numYears,
                                  numDays,
+                                 refDay,
                                  windowOpen = windowOpen[3],
                                  windowDuration = windowDuration,
                                  tScenario = "open") %>% 
@@ -65,6 +69,7 @@ temperatureInputs <- expand_grid(seed, # open and duration scenarios
               noiseSignal,
               numYears,
               numDays,
+              refDay,
               windowOpen = windowOpen,
               windowDuration = windowDuration[3],
               tScenario = "duration")) %>%# label the scenarios 
@@ -75,7 +80,7 @@ temperatureInputs <- expand_grid(seed, # open and duration scenarios
 simulatedTempData <- pmap(select(temperatureInputs, -tScenario), 
                           function(marker, seed, noise,
                                    mean, meanSignal, noiseSignal, 
-                                   numYears, numDays, 
+                                   numYears, numDays, refDay,
                                    windowOpen, windowDuration){
                             results <- simulateTempData(seed = seed,
                                                 noise = noise,
@@ -84,6 +89,7 @@ simulatedTempData <- pmap(select(temperatureInputs, -tScenario),
                                                 noiseSignal = noiseSignal,
                                                 numYears = numYears,
                                                 numDays = numDays,
+                                                refDay = refDay,
                                                 windowOpen = windowOpen,
                                                 windowDuration = windowDuration)
                             saveRDS(results, paste0("./Data/TempData/tempData", 
@@ -125,6 +131,9 @@ intercept <- 20
 # seed from 1:50
 seed <- seq(1, 50, 1)
 
+# refDay always 100
+refDay = 100
+
 # now expand grid to include the extra axes
 
 biologicalInputsC <- expand_grid(biologicalInputsB, 
@@ -132,12 +141,14 @@ biologicalInputsC <- expand_grid(biologicalInputsB,
                                  slope = slope[5], 
                                  intercept, 
                                  seed,
+                                 refDay,
                                  bScenario = "bnoise") %>%
   bind_rows(expand_grid(biologicalInputsB, 
                         bioNoise = bioNoise[2], 
                         slope, # bslope scenario
                         intercept, 
                         seed,
+                        refDay,
                         bScenario = "slope"))
 
 ### reorder column names to be in order expected by pmap
@@ -148,6 +159,7 @@ biologicalInputs <- biologicalInputsC %>%
            slope, 
            intercept, 
            tempDataNames, 
+           refDay,
            windowOpen, 
            windowDuration,
         bScenario) %>%
@@ -160,7 +172,7 @@ plan(multisession)
 simulatedBioData <- future_pmap(select(biologicalInputs, -bScenario),
                          function(bioMarker, seed, bioNoise, 
                                   slope, intercept,
-                                  tempDataNames, windowOpen, 
+                                  tempDataNames, refDay, windowOpen, 
                                   windowDuration){
                            
                            # first import the temperature data
@@ -173,6 +185,7 @@ simulatedBioData <- future_pmap(select(biologicalInputs, -bScenario),
                                               slope = slope,
                                               intercept = intercept,
                                               tempData = tempData,
+                                              refDay = refDay,
                                               windowOpen = windowOpen,
                                               windowDuration = windowDuration)
                            saveRDS(results, paste0("./Data/BioData/bioData", 
@@ -223,6 +236,9 @@ windowOpen <- round(seq(1, 50, length.out = 3))
 # windowDuration from 1-30
 windowDuration <- c(1, 15, 30)
 
+# refDay = 100
+refDay = 100
+
 # now expand grid to include the extra axes
 
 biologicalInputsReal <- data.frame(tempDataNames = 
@@ -233,6 +249,7 @@ biologicalInputsRealB <- expand_grid(biologicalInputsReal,
                                  slope = slope[5], 
                                  intercept, 
                                  seed,
+                                 refDay,
                                  windowOpen = windowOpen[2],
                                  windowDuration = windowDuration[2],
                                  bScenario = "bnoise") %>%
@@ -241,6 +258,7 @@ biologicalInputsRealB <- expand_grid(biologicalInputsReal,
                         slope, # bslope scenario
                         intercept, 
                         seed,
+                        refDay,
                         windowOpen = windowOpen[2],
                         windowDuration = windowDuration[2],
                         bScenario = "slope")) %>%
@@ -249,6 +267,7 @@ biologicalInputsRealB <- expand_grid(biologicalInputsReal,
                         slope = slope[5], 
                         intercept, 
                         seed,
+                        refDay,
                         windowOpen,
                         windowDuration = windowDuration[2],
                         bScenario = "open")) %>%
@@ -257,6 +276,7 @@ biologicalInputsRealB <- expand_grid(biologicalInputsReal,
                         slope = slope[5], 
                         intercept, 
                         seed,
+                        refDay,
                         windowOpen = windowOpen[2],
                         windowDuration,
                         bScenario = "slope"))
@@ -269,6 +289,7 @@ biologicalInputsRealB <- biologicalInputsRealB %>%
          slope, 
          intercept, 
          tempDataNames, 
+         refDay,
          windowOpen, 
          windowDuration,
          bScenario) %>%
@@ -281,7 +302,7 @@ plan(multisession, workers = 3)
 simulatedBioData <- future_pmap(select(biologicalInputsRealB, -bScenario),
                                 function(bioMarker, seed, bioNoise, 
                                          slope, intercept,
-                                         tempDataNames, windowOpen, 
+                                         tempDataNames, refDay, windowOpen, 
                                          windowDuration){
                                   
                                   # first import the temperature data
@@ -294,6 +315,7 @@ simulatedBioData <- future_pmap(select(biologicalInputsRealB, -bScenario),
                                                              slope = slope,
                                                              intercept = intercept,
                                                              tempData = tempData,
+                                                             refDay = refDay,
                                                              windowOpen = windowOpen,
                                                              windowDuration = windowDuration)
                                   saveRDS(results, paste0("./Data/BioData2/bioData", 

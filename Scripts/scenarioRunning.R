@@ -66,14 +66,15 @@ nthin <- 10
 seed <- 1:nchains
 
 constants <- list(numYears = 50,
-                  windowStarts = c(1,50),
-                  windowDurations = c(1,49))
+                  windowLags = c(50,1),
+                  windowDurations = c(1,49),
+                  refDay = 100)
 
 set.seed(2026)
 # sum of open and duration must be < numDays
 inits <- list(open = round(runif(1,
-                                 constants$windowStarts[1], 
-                                 constants$windowStarts[2])),
+                                 constants$refDay - windowLags[1], 
+                                 constants$refDay - windowLags[2])),
               duration = round(runif(1, 
                                   constants$windowDurations[1], 
                                   constants$windowDurations[2])), 
@@ -206,14 +207,15 @@ nthin <- 10
 seed <- 1:nchains
 
 constants <- list(numYears = 50,
-                  windowStarts = c(1,50),
-                  windowDurations = c(1,49))
+                  windowLags = c(50,1),
+                  windowDurations = c(1,49),
+                  refDay = 100)
 
 set.seed(2026)
 # sum of open and duration must be < numDays
 inits <- list(open = round(runif(1,
-                                 constants$windowStarts[1], 
-                                 constants$windowStarts[2])),
+                                 constants$refDay - windowLags[1], 
+                                 constants$refDay - windowLags[2])),
               duration = round(runif(1, 
                                      constants$windowDurations[1], 
                                      constants$windowDurations[2])), 
