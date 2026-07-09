@@ -30,10 +30,14 @@ simulateBioData <- function(seed,
                             slope,
                             intercept,
                             tempData,
+                            refDay,
                             windowOpen,
                             windowDuration){
+  
+windowStart <- refDay - windowOpen
+windowClose <- windowStart-windowDuration
 
-windowTemp <- colMeans(tempData[windowOpen:(windowOpen + windowDuration),])
+windowTemp <- colMeans(tempData[(windowStart - windowDuration):windowStart,])
 
 set.seed(seed)
 biologicalVariable <- rnorm(ncol(tempData), 
