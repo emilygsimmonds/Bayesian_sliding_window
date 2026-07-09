@@ -28,6 +28,7 @@ meanSignal = 10
 noiseSignal = 0.5
 numYears = 2
 numDays = 10
+refDay = 10
 windowOpen = 1
 windowDuration = 1
 
@@ -38,9 +39,10 @@ test1 <- simulateTempData(seed = 2026,
                           noiseSignal,
                           numYears,
                           numDays,
+                          refDay,
                           windowOpen, 
                           windowDuration) 
-# Seems to work - 20.02.2026
+# Seems to work - 09.07.2026
 
 test2 <- simulateTempData(seed = 2026,
                           noise, 
@@ -49,13 +51,15 @@ test2 <- simulateTempData(seed = 2026,
                           noiseSignal,
                           numYears,
                           numDays,
+                          refDay,
                           windowOpen = 2, 
                           windowDuration) 
-# Seems to work - 20.02.2026
+# Seems to work - 09.07.2026
 
 #### Additional test for window duration > 1 
 numDays = 25
 windowDuration = 15
+refDay = 25
 
 test2.b <- simulateTempData(seed = 2026,
                           noise, 
@@ -64,8 +68,11 @@ test2.b <- simulateTempData(seed = 2026,
                           noiseSignal,
                           numYears,
                           numDays,
+                          refDay,
                           windowOpen = 2, 
-                          windowDuration) # Seems to work
+                          windowDuration) # Seems to work 09.07.26
+
+test2.b
 
 
 # test against year 1 manually
@@ -75,21 +82,20 @@ yearEffect <- as.list(rnorm(numYears,
                             mean = meanSignal, 
                             sd = meanSignal/5)) 
 set.seed(1)
-keyWindow <- rnorm(1, mean = yearEffect[[1]],
+keyWindow <- rnorm(2, mean = yearEffect[[1]], # actually 1 more than duration due to indexing
                                     sd = noiseSignal)
 set.seed(1)
-preWindow <- rnorm(0, 
+postWindow <- rnorm(1, 
                    mean = mean,
                    sd = noise)
 set.seed(1)
-postWindow <- rnorm(9, 
+preWindow <- rnorm(7, 
                     mean = mean, 
                     sd = noise)
 manualTest1 <- data.frame(year = c(preWindow,
-                                       keyWindow,
-                                       postWindow))
+                                   keyWindow, postWindow))
 
-test1[,1] - manualTest1 # WORKS: 20.02.26
+test1[,1] - manualTest1 # WORKS: 08.07.26
 
 ### Check that all years are different
 test1
@@ -107,6 +113,7 @@ meanSignal = 10
 noiseSignal = 0.5
 numYears = 2
 numDays = 10
+refDay = 10
 windowOpen = 1
 windowDuration = 1
 
@@ -119,6 +126,7 @@ tempData <- simulateTempData(seed = 2026,
                           noiseSignal,
                           numYears,
                           numDays,
+                          refDay,
                           windowOpen, 
                           windowDuration) 
 
@@ -130,12 +138,13 @@ bioData <- simulateBioData(seed = 2026,
                            slope = 5, 
                            intercept = 5,
                            tempData = tempData,
+                           refDay = refDay,
                            windowOpen = windowOpen,
                            windowDuration = windowDuration)
 
 # try and simulate manually - year 2
 
-windowTemp <- mean(tempData[[2]][windowOpen:(windowOpen + windowDuration)])
+windowTemp <- mean(tempData[[2]][((refDay-windowOpen)-windowDuration):(refDay-windowOpen)])
 
 set.seed(2026)
 biologicalVariable <- rnorm(2, 
@@ -143,7 +152,7 @@ biologicalVariable <- rnorm(2,
                               (windowTemp*5),
                             sd = 1)
 
-bioData[[2]] - biologicalVariable # WORKS 20.02.2026
+bioData[[2]] - biologicalVariable[2] # WORKS 08.07.2026
 
 ### Check all years are different
 
